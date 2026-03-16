@@ -1,5 +1,10 @@
-
-import { integer, pgTable, timestamp, uuid, varchar,  } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export const UserSchema = pgTable("utilisateur", {
   id: uuid("id").primaryKey(),
@@ -9,7 +14,7 @@ export const UserSchema = pgTable("utilisateur", {
   email: varchar("email").notNull(),
   image: varchar("image"),
   role: varchar("role").notNull(),
-  motDePasse: varchar("mot_pass").notNull(),   
+  motDePasse: varchar("mot_pass").notNull(),
 });
 
 export const ClientSchema = pgTable("client", {
@@ -42,14 +47,22 @@ export const ProduitSchema = pgTable("produit", {
   image: varchar("image"),
   prix_achat: varchar("prix_achat").notNull(),
   prix_vente: varchar("prix_vente").notNull(),
+  categoryId: uuid("category_id")
+    .references(() => CategorySchema.id)
+    .notNull(),
 });
 
 export const PromotionSchema = pgTable("promotions", {
   id: uuid("id").primaryKey().defaultRandom(),
 
-  reduction: integer ("reduction").notNull(),
+  // Relation vers le produit
+  produitId: uuid("produit_id")
+    .references(() => ProduitSchema.id)
+    .notNull(),
 
-  typeReduction: varchar("type_reduction", { length: 50 }).notNull(), 
+  reduction: integer("reduction").notNull(),
+
+  typeReduction: varchar("type_reduction", { length: 50 }).notNull(),
   // "pourcentage" ou "montant"
 
   dateDebut: timestamp("date_debut").notNull(),
