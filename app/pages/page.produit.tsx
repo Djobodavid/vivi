@@ -74,12 +74,15 @@ const Produit = () => {
             onChange={handleChange}
           />
 
-          <button
-            type="submit"
-            className="btn btn-bordered w-full"
-          >
-            Enregistrer
-          </button>
+          <div className="flex justify-between">
+            <button type="submit" className="btn btn-primary">
+              Enregistrer
+            </button>
+
+            <button type="submit" className="btn btn-primary">
+              Annuler
+            </button>
+          </div>
         </form>
       </div>
     </div>

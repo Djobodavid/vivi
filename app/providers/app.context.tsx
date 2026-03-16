@@ -16,6 +16,14 @@ interface AppContextType {
   setFournisseur: React.Dispatch<React.SetStateAction<boolean>>;
   unite: boolean;
   setUnite: React.Dispatch<React.SetStateAction<boolean>>;
+  connexion: boolean;
+  setConnexion: React.Dispatch<React.SetStateAction<boolean>>;
+  stock: boolean;
+  setStock: React.Dispatch<React.SetStateAction<boolean>>;
+  inventaire: boolean;
+  setInventaire: React.Dispatch<React.SetStateAction<boolean>>;
+  rapport: boolean;
+  setRapport: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -38,6 +46,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [client, setClient] = useState(false);
   const [fournisseur, setFournisseur] = useState(false);
   const [unite, setUnite] = useState(false);
+  const[connexion, setConnexion] = useState(false);
+  const[stock, setStock] = useState(false);
+  const[inventaire, setInventaire] = useState(false);
+  const[rapport, setRapport] = useState(false);
 
   return (
     <AppContext.Provider
@@ -55,7 +67,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         fournisseur,
         setFournisseur,
         unite,
-        setUnite
+        setUnite,
+        connexion,
+        setConnexion,
+        stock,
+        setStock,
+        inventaire,
+        setInventaire,
+        rapport,
+        setRapport,
       }}
     >
       {children}

@@ -98,9 +98,15 @@ const UtilisateurForm = () => {
             onChange={handleChange}
           />
 
-          <button type="submit" className="btn btn-primary">
-            Enregistrer
-          </button>
+          <div className="flex justify-between">
+            <button type="submit" className="btn btn-primary">
+              Enregistrer
+            </button>
+
+            <button type="submit" className="btn btn-primary">
+              Annuler
+            </button>
+          </div>
         </form>
       </div>
     </div>

@@ -1,21 +1,25 @@
 "use client";
 
-import { Fournisseur } from "@/type";
 import React, { useState } from "react";
 
+type Connexion = {
+  role: string;
+  password: string;
+  telephone: string;
+};
 
-const FournisseurForm = () => {
-  const [fournisseur, setFournisseur] = useState<Fournisseur>({
-    nom: "",
-    adresse: "",
+const ConnexionForm = () => {
+  const [connexion, setConnexion] = useState<Connexion>({
+    role: "",
+    password: "",
     telephone: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    setFournisseur({
-      ...fournisseur,
+    setConnexion({
+      ...connexion,
       [name]: value,
     });
   };
@@ -24,25 +28,25 @@ const FournisseurForm = () => {
     <div className="flex justify-center items-center min-h-screen">
       <div className="bg-white shadow-md p-6 rounded-xl w-full max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-center">
-          Créer un fournisseur
+          Créer une connexion
         </h1>
 
         <form className="space-y-4">
           <input
             type="text"
-            name="nom"
-            placeholder="Nom"
+            name="role"
+            placeholder="role"
             className="btn btn-bordered w-full"
-            value={fournisseur.nom}
+            value={connexion.role}
             onChange={handleChange}
           />
 
           <input
             type="text"
-            name="adresse"
-            placeholder="Adresse"
+            name="password"
+            placeholder="password"
             className="btn btn-bordered w-full"
-            value={fournisseur.adresse}
+            value={connexion.password}
             onChange={handleChange}
           />
 
@@ -51,7 +55,7 @@ const FournisseurForm = () => {
             name="telephone"
             placeholder="Téléphone"
             className="btn btn-bordered w-full"
-            value={fournisseur.telephone}
+            value={connexion.telephone}
             onChange={handleChange}
           />
 
@@ -70,4 +74,4 @@ const FournisseurForm = () => {
   );
 };
 
-export default FournisseurForm;
+export default ConnexionForm;

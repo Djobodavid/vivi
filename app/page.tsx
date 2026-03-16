@@ -9,9 +9,11 @@ import ClientForm from "./pages/page.client";
 import FournisseurForm from "./pages/page.fournisseur";
 import UniteForm from "./pages/page.unite";
 import { useAppContext } from "./providers/app.context";
+import ConnexionForm from "./pages/page.connexion";
+import Rapport from "./pages/page.rapport";
 
 export default function Home() {
-  const {accueil,produit,utilisateur,category,client,fournisseur,unite}=useAppContext();
+  const {accueil,produit,utilisateur,category,client,fournisseur,unite,connexion,rapport}=useAppContext();
  /*  const [accueil, setAccueil] = useState(true)
   const [produit, setProduit] = useState(false)
   const [utilisateur, setUtilisateur] = useState(false)
@@ -23,13 +25,16 @@ export default function Home() {
   return (
     <>
     <div>
-     {accueil && <h1 className="text-4xl font-bold text-center mt-10">Bienvenue sur la page d'accueil</h1>}
+     {accueil && <ConnexionForm/>}
       {produit && <Produit/>}
       {utilisateur && <UtilisateurForm/>}
       {category && <CategoryForm/>}
       {client && <ClientForm/>}
       {fournisseur && <FournisseurForm/>}
       {unite && <UniteForm/>}
+      {rapport && <Rapport/>}
+      {connexion && <ConnexionForm/>}
+      
     </div>
     </>
   );
