@@ -1,116 +1,113 @@
 "use client";
 
-import React, { useState } from "react";
+import { Check } from "@gravity-ui/icons";
+import { ThemeProvider } from "@gravity-ui/uikit";
+import {
+  Button,
+  Description,
+  FieldError,
+  Form,
+  Input,
+  Label,
+  TextField,
+} from "@heroui/react";
 
-type Utilisateur = {
-  nom: string;
-  prenom: string;
-  telephone: string;
-  role: string;
-  email: string;
-  motDePasse: string;
-};
+export default function UtilisateurForm() {
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data: Record<string, string> = {};
 
-const UtilisateurForm = () => {
-  const [user, setUser] = useState<Utilisateur>({
-    nom: "",
-    prenom: "",
-    telephone: "",
-    role: "",
-    email: "",
-    motDePasse: "",
-  });
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-
-    setUser({
-      ...user,
-      [name]: value,
+    // Convert FormData to plain object
+    formData.forEach((value, key) => {
+      data[key] = value.toString();
     });
+
+    alert(`Form submitted with: ${JSON.stringify(data, null, 2)}`);
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
-      <div className="bg-white shadow-md p-6 rounded-xl w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          Créer un utilisateur
-        </h1>
+    
+    <div className="flex items-center justify-center min-h-screen bg-transparent">
+      <Form className="flex w-96 flex-col gap-4" onSubmit={onSubmit}>
+        <TextField isRequired name="nom" type="text">
+          <Label>Nom</Label>
+          <Input placeholder="Entrer le nom" />
+          <FieldError />
+        </TextField>
 
-        <form className="space-y-4">
-          <input
-            type="text"
-            name="nom"
-            placeholder="Nom"
-            className="btn btn-bordered w-full"
-            value={user.nom}
-            onChange={handleChange}
-          />
+        <TextField isRequired name="prenoms" type="text">
+          <Label>Prénoms</Label>
+          <Input placeholder="Entrer les prénoms" />
+          <FieldError />
+        </TextField>
 
-          <input
-            type="text"
-            name="prenom"
-            placeholder="Prénom"
-            className="btn btn-bordered w-full"
-            value={user.prenom}
-            onChange={handleChange}
-          />
+        <TextField isRequired name="telephone" type="phone">
+          <Label>Téléphone</Label>
+          <Input placeholder="Entrer le numéro de téléphone" />
+          <FieldError />
+        </TextField>
 
-          <input
-            type="text"
-            name="telephone"
-            placeholder="Téléphone"
-            className="btn btn-bordered w-full"
-            value={user.telephone}
-            onChange={handleChange}
-          />
+        <TextField isRequired name="role" type="text">
+          <Label>Role</Label>
+          <Input placeholder="Entrer le role" />
+          <FieldError />
+        </TextField>
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            className="btn btn-bordered w-full"
-            value={user.email}
-            onChange={handleChange}
-          />
+        <TextField
+          isRequired
+          name="email"
+          type="email"
+          validate={(value) => {
+            if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)) {
+              return "Please enter a valid email address";
+            }
 
-          <select
-            aria-label="text"
-            name="role"
-            className="select select-text w-full"
-            value={user.role}
-            onChange={handleChange}
-          >
-            <option value="">Choisir un rôle</option>
-            <option value="admin">Admin</option>
-            <option value="vendeur">Vendeur</option>
-            <option value="gestionnaire">Gestionnaire</option>
-          </select>
+            return null;
+          }}
+        >
+          <Label>Email</Label>
+          <Input placeholder="john@example.com" />
+          <FieldError />
+        </TextField>
 
-          <input
-            type="password"
-            name="motDePasse"
-            placeholder="Mot de passe"
-            className="btn btn-bordered w-full"
-            value={user.motDePasse}
-            onChange={handleChange}
-          />
+        <TextField
+          isRequired
+          minLength={8}
+          name="password"
+          type="password"
+          validate={(value) => {
+            if (value.length < 8) {
+              return "Password must be at least 8 characters";
+            }
+            if (!/[A-Z]/.test(value)) {
+              return "Password must contain at least one uppercase letter";
+            }
+            if (!/[0-9]/.test(value)) {
+              return "Password must contain at least one number";
+            }
 
-          <div className="flex justify-between">
-            <button type="submit" className="btn btn-primary">
-              Enregistrer
-            </button>
+            return null;
+          }}
+        >
+          <Label>Password</Label>
+          <Input placeholder="Enter your password" />
+          <Description>
+            Must be at least 8 characters with 1 uppercase and 1 number
+          </Description>
+          <FieldError />
+        </TextField>
 
-            <button type="submit" className="btn btn-primary">
-              Annuler
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="flex gap-2">
+          <Button type="submit">
+            <Check />
+            Submit
+          </Button>
+          <Button type="reset" variant="secondary">
+            Reset
+          </Button>
+        </div>
+      </Form>
     </div>
   );
-};
-
-export default UtilisateurForm;
+}

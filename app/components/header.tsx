@@ -1,160 +1,38 @@
 "use client";
-
-import {
-  Navbar,
-  NavbarBrand,
-  NavbarContent,
-  NavbarItem,
-  Link,
-  Button,
-} from "@heroui/react";
+import { Button } from "@heroui/react";
 import { useAppContext } from "../providers/app.context";
 
 export default function NavbarComponent() {
   const {
-    setAccueil,
-    setCategory,
-    setProduit,
-    setUtilisateur,
-    setClient,
-    setFournisseur,
-    setUnite,
-    setConnexion,
-    setStock,
-    setInventaire,
-    setRapport,
+    setAccueil, setCategory, setProduit, setUtilisateur,
+    setClient, setFournisseur, setUnite, setStock,
+    setInventaire, setRapport, setConnexion
   } = useAppContext();
+
+  const handleClick = (tab: string) => {
+    setAccueil(tab === "accueil");
+    setCategory(tab === "category");
+    setProduit(tab === "produit");
+    setUtilisateur(tab === "utilisateur");
+    setClient(tab === "client");
+    setFournisseur(tab === "fournisseur");
+    setUnite(tab === "unite");
+    setStock(tab === "stock");
+    setInventaire(tab === "inventaire");
+    setRapport(tab === "rapport");
+    setConnexion(tab === "connexion");
+  };
+
   return (
-    <Navbar className="gap-6 p-5  space-x-5">
-      <NavbarBrand className="mr-4">
-        <p className="font-bold text-inherit text-2xl">DERMASTOCK</p>
-      </NavbarBrand>
-      <NavbarContent className="hidden sm:flex gap-4 space-x-5 ">
-        <NavbarItem>
-          <Button
-            onPress={(e) => {
-              setAccueil(true);
-              setCategory(false);
-              setProduit(false);
-              setUtilisateur(false);
-              setClient(false);
-              setFournisseur(false);
-              setUnite(false);
-              setStock(false);
-              setConnexion(false);
-            }}
-          >
-            Accueil
+    <div className="flex items-center gap-4 p-5 bg-transparent">
+      <div className="font-bold text-2xl">DERMASTOCK</div>
+      <div className="flex gap-2 ml-auto">
+        {["Accueil","Produits","Category","Inventaire","Stock","Rapport","Connexion","Utilisateur"].map((tab) => (
+          <Button key={tab} onPress={() => handleClick(tab.toLowerCase())}>
+            {tab}
           </Button>
-        </NavbarItem>
-        <NavbarItem>
-          <Button
-            onPress={(e) => {
-              setAccueil(false);
-              setCategory(false);
-              setProduit(true);
-              setUtilisateur(false);
-              setClient(false);
-              setFournisseur(false);
-              setUnite(false);
-              setStock(false);
-              setConnexion(false);
-            }}
-          >
-            Produits
-          </Button>
-        </NavbarItem>
-        <NavbarItem>
-          <Button
-            onPress={(e) => {
-              setAccueil(false);
-              setCategory(true);
-              setProduit(false);
-              setUtilisateur(false);
-              setClient(false);
-              setFournisseur(false);
-              setUnite(false);
-              setStock(false);
-              setConnexion(false);
-            }}
-          >
-            Catégories
-          </Button>
-        </NavbarItem>
-        <NavbarItem>
-          <Button
-            onPress={(e) => {
-              setAccueil(false);
-              setCategory(false);
-              setProduit(false);
-              setInventaire(true);
-              setUtilisateur(false);
-              setClient(false);
-              setFournisseur(false);
-              setUnite(false);
-              setStock(false);
-              setConnexion(false);
-            }}
-          >
-            Invetnaire
-          </Button>
-        </NavbarItem>
-        <NavbarItem>
-          <Button
-            onPress={(e) => {
-              setAccueil(false);
-              setCategory(false);
-              setProduit(false);
-              setUtilisateur(false);
-              setClient(false);
-              setFournisseur(false);
-              setUnite(false);
-              setStock(true);
-              setConnexion(false);
-              setInventaire(false);
-            }}
-          >
-            Stock
-          </Button>
-        </NavbarItem>
-        <NavbarItem className="hidden lg:flex">
-          <Button
-            onPress={(e) => {
-              setConnexion(false);
-              setAccueil(false);
-              setCategory(false);
-              setProduit(false);
-              setUtilisateur(false);
-              setClient(false);
-              setFournisseur(false);
-              setUnite(false);
-              setStock(false);
-              setInventaire(false);
-              setRapport(true);
-            }}
-          >
-            Rapport
-          </Button>
-        </NavbarItem>
-        <NavbarItem className="hidden lg:flex">
-          <Button
-            onPress={(e) => {
-              setConnexion(true);
-              setAccueil(false);
-              setCategory(false);
-              setProduit(false);
-              setUtilisateur(false);
-              setClient(false);
-              setFournisseur(false);
-              setUnite(false);
-              setStock(false);
-              setInventaire(false);
-            }}
-          >
-            Connexion
-          </Button>
-        </NavbarItem>
-      </NavbarContent>
-    </Navbar>
+        ))}
+      </div>
+    </div>
   );
 }
