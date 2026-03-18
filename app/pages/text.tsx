@@ -2,99 +2,38 @@
 
 import React, { useState } from "react";
 
-type Utilisateur = {
-  nom: string;
-  prenom: string;
-  telephone: string;
-  role: string;
-  email: string;
-  motDePasse: string;
+type Category = {
+  name: string;
 };
 
-const UtilisateurF = () => {
-  const [user, setUser] = useState<Utilisateur>({
-    nom: "",
-    prenom: "",
-    telephone: "",
-    role: "",
-    email: "",
-    motDePasse: "",
+const CategoryForm = () => {
+  const [category, setCategory] = useState<Category>({
+    name: "",
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    setUser({
-      ...user,
+    setCategory({
+      ...category,
       [name]: value,
     });
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div className="flex flex-col justify-center items-center min-h-screen">
       <div className="bg-white shadow-md p-6 rounded-xl w-full max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-center">
-          Créer un utilisateur
+          Créer une catégorie
         </h1>
 
         <form className="space-y-4">
           <input
             type="text"
-            name="nom"
-            placeholder="Nom"
+            name="name"
+            placeholder="Nom de la catégorie"
             className="btn btn-bordered w-full"
-            value={user.nom}
-            onChange={handleChange}
-          />
-
-          <input
-            type="text"
-            name="prenom"
-            placeholder="Prénom"
-            className="btn btn-bordered w-full"
-            value={user.prenom}
-            onChange={handleChange}
-          />
-
-          <input
-            type="text"
-            name="telephone"
-            placeholder="Téléphone"
-            className="btn btn-bordered w-full"
-            value={user.telephone}
-            onChange={handleChange}
-          />
-
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            className="btn btn-bordered w-full"
-            value={user.email}
-            onChange={handleChange}
-          />
-
-          <select
-            aria-label="text"
-            name="role"
-            className="select select-text w-full"
-            value={user.role}
-            onChange={handleChange}
-          >
-            <option value="">Choisir un rôle</option>
-            <option value="admin">Admin</option>
-            <option value="vendeur">Vendeur</option>
-            <option value="gestionnaire">Gestionnaire</option>
-          </select>
-
-          <input
-            type="password"
-            name="motDePasse"
-            placeholder="Mot de passe"
-            className="btn btn-bordered w-full"
-            value={user.motDePasse}
+            value={category.name}
             onChange={handleChange}
           />
 
@@ -113,4 +52,4 @@ const UtilisateurF = () => {
   );
 };
 
-export default UtilisateurF;
+export default CategoryForm;
