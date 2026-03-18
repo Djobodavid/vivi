@@ -15,7 +15,9 @@ const Navbar = () => {
     { href: "/category", label: "Catégory", icon: ListTree },
     { href: "/Clients", label: "Clients", icon: User },
     { href: "/fournisseur", label: "Fournisseurs", icon: User  },
+    { href: "/Utilisateur", label: "Utilisateurs", icon: User },
     { href: "/connexion", label: "Connexion", icon: Wifi },
+    
   ];
 
   const renderLinks = (baseClass: string) => (

@@ -23,9 +23,10 @@ type Props = {
   loading: boolean;
   onClose: () => void;
   onSubmit: () => void;
+  onReset?: () => void;
   editMode?: boolean;
   modalId?: string;
-  submitLabel?: string; 
+  submitLabel?: string;
 };
 
 const CustomModal = ({
@@ -33,6 +34,7 @@ const CustomModal = ({
   fields,
   loading,
   submitLabel,
+  onReset,
   onClose,
   onSubmit,
   editMode,
@@ -112,9 +114,10 @@ const CustomModal = ({
           })}
 
           {/* 🔥 BOUTON */}
+          <div className="flex justify-between " >
           <button
             type="submit"
-            className="btn btn-primary w-full"
+            className="btn btn-primary "
             disabled={loading}
           >
             {loading
@@ -123,6 +126,17 @@ const CustomModal = ({
                 ? "Modifier"
                 : submitLabel || "Enregistrer"}
           </button>
+
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              className="btn  btn-primary px-10"
+            >
+              Reset
+            </button>
+          )}
+          </div>
         </form>
       </div>
     </dialog>
