@@ -25,12 +25,14 @@ type Props = {
   onSubmit: () => void;
   editMode?: boolean;
   modalId?: string;
+  submitLabel?: string; 
 };
 
 const CustomModal = ({
   title,
   fields,
   loading,
+  submitLabel,
   onClose,
   onSubmit,
   editMode,
@@ -119,7 +121,7 @@ const CustomModal = ({
               ? "Enregistrement..."
               : editMode
                 ? "Modifier"
-                : "Enregistrer"}
+                : submitLabel || "Enregistrer"}
           </button>
         </form>
       </div>

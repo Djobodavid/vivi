@@ -33,6 +33,7 @@ const Page = () => {
         loading={loading}
         onClose={closeModal}
         onSubmit={createConnexion}
+        submitLabel="Se connecter"  
         fields={[
           {
             label: "Email",
