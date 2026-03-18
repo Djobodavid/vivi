@@ -23,7 +23,7 @@ const Page = () => {
 
   return (
     <Wrapper>
-      <div className="w-full h-[calc(100vh-0px)] flex items-center justify-center">
+      <div className="w-full mt-50 flex items-center justify-center">
       <button className="btn btn-primary flex justify-center items-center" onClick={openModal}>
         Se connecter
       </button>
