@@ -131,7 +131,7 @@ const CustomModal = ({
             <button
               type="button"
               onClick={onReset}
-              className="btn  btn-primary px-10"
+              className="btn  btn-error px-10"
             >
               Reset
             </button>

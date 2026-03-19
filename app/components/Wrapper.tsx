@@ -22,7 +22,7 @@ const Wrapper = ({ children }: wrapperProps) => {
             pauseOnHover
             draggable
          />
-        <div className='px-5 md:px-[10%] mt-8 mb-10'>
+        <div className='px-6 md:px-[10%] mt-8 mb-10'>
             {children}
         </div>
     </div>

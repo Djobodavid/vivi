@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Icon, ListTree, Menu, User, Wifi, X } from "lucide-react";
+import { Home, Icon, LayoutDashboard, ListTree, Menu, ShoppingCart, User, Wifi, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
@@ -12,11 +12,15 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/", label: "Accueil", icon: Home },
-    { href: "/category", label: "Catégory", icon: ListTree },
+    { href: "/Produit", label: "Produits", icon: ShoppingCart },
+    { href: "/Vente", label: "Ventes", icon: ShoppingCart },
+    { href: "/category", label: "Catégories", icon: ListTree },
     { href: "/Clients", label: "Clients", icon: User },
     { href: "/fournisseur", label: "Fournisseurs", icon: User  },
+    { href: "/rapport", label: "Rapports", icon: LayoutDashboard },
     { href: "/Utilisateur", label: "Utilisateurs", icon: User },
     { href: "/connexion", label: "Connexion", icon: Wifi },
+    
     
   ];
 
@@ -39,7 +43,7 @@ const Navbar = () => {
     </>
   );
   return (
-    <div className="border-b border-base-300 px-5 md:px-[10%] py-4 relative">
+    <div className="border-b border-base-300 px-5 md:px-[5%] py-4 relative">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
           <div className="p-2">
