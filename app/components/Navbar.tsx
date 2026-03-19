@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Icon, LayoutDashboard, ListTree, Menu, ShoppingCart, User, Wifi, X } from "lucide-react";
+import { Home, Icon, LayoutDashboard, ListTree, Menu, Package, ShoppingCart, User, Wifi, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
@@ -12,7 +12,7 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/", label: "Accueil", icon: Home },
-    { href: "/Produit", label: "Produits", icon: ShoppingCart },
+    { href: "/Produit", label: "Produits", icon: Package  },
     { href: "/Vente", label: "Ventes", icon: ShoppingCart },
     { href: "/category", label: "Catégories", icon: ListTree },
     { href: "/Clients", label: "Clients", icon: User },
