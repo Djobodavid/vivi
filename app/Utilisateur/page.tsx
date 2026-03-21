@@ -1,147 +1,163 @@
 "use client";
 
-import React, { useState } from "react";
-import CustomModal from "../components/Modal";
+import React, { useEffect, useState } from "react";
 import Wrapper from "../components/Wrapper";
+import axios from "axios";
+import UtilisateurModal from "../components/UseuModal";
+import { toast } from "react-toastify";
+import { Group, Trash, User } from "lucide-react";
+import EmptyState from "../components/EmptyState";
 
-const Page = () => {
-  const [nom, setNom] = useState("");
-  const [prenoms, setPrenoms] = useState("");
+const page = () => {
+  const [name, setName] = useState("");
   const [telephone, setTelephone] = useState("");
   const [role, setRole] = useState("");
+  const [motDePasse, setMotDePasse] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
+  const [confirme, setConfirme] = useState("");
+  const [prenoms, setPrenoms] = useState("");
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
 
-  const openModal = () => {
+  const loadUsers = async () => {
+    try {
+      const res = await axios.get("/api/auth/signup");
+      setUsers(res.data.data);
+    } catch (error) {
+      console.error("Erreur lors du chargement des utilisateurs :", error);
+    }
+  };
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const onpenCreateModal = () => {
     setEditMode(false);
-    setNom("");
+    setName("");
     setPrenoms("");
     setTelephone("");
     setRole("");
-    setEmail("");
-    setPassword("");
-    resetForm();
-    setConfirmPassword("");
-
-    (document.getElementById("custom_modal") as HTMLDialogElement)?.showModal();
+    setMotDePasse("");
+    setConfirme("");
+    (document.getElementById("user_modal") as HTMLDialogElement)?.showModal();
   };
 
   const closeModal = () => {
-    (document.getElementById("custom_modal") as HTMLDialogElement)?.close();
-  };
-
-  const createUser = () => {
-    if (password !== confirmPassword) {
-      alert("Les mots de passe ne correspondent pas");
-      return;
-    }
-
-    setLoading(true);
-
-    console.log({
-      nom,
-      prenoms,
-      telephone,
-      role,
-      email,
-      password,
-    });
-
-    setTimeout(() => {
-      setLoading(false);
-      closeModal();
-    }, 1000);
-  };
-
-  const updateUser = () => {
-    console.log("update user");
-  };
-
-  const resetForm = () => {
-    setNom("");
+    setEditMode(false);
+    setName("");
     setPrenoms("");
     setTelephone("");
     setRole("");
     setEmail("");
-    setPassword("");
-    setConfirmPassword("");
+    setMotDePasse("");
+    setConfirme("");
+    (document.getElementById("user_modal") as HTMLDialogElement)?.close();
   };
+
+  const createUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    try {
+      e.preventDefault();
+
+      const res = await axios.post("/api/auth/signup", {
+        nom: name,
+        prenom: prenoms,
+        telephone: telephone,
+        role: role,
+        email: email,
+        motDePasse: motDePasse,
+      } as any);
+
+      closeModal();
+      loadUsers();
+      toast.success("Utilisateur créé avec succès");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const modifierCategory = () => {};
+
+  const onReset = () => {
+    setName("");
+    setPrenoms("");
+    setTelephone("");
+    setRole("");
+    setEmail("");
+    setMotDePasse("");
+    setConfirme("");
+  };
+
+  const deleteUser = async (id: string) => {
+  try {
+    if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
+
+    await axios.delete("/api/auth/signup", { data: { id } }); // ⚡ envoi id dans le corps
+
+    toast.success("Utilisateur supprimé avec succès");
+    loadUsers(); // recharge la liste
+  } catch (error) {
+    console.error("Erreur lors de la suppression :", error);
+    toast.error("Impossible de supprimer l'utilisateur");
+  }
+};
 
   return (
     <Wrapper>
-      <button className="btn btn-primary mb-4" onClick={openModal}>
-        Ajouter un utilisateur
-      </button>
+      <div>
+        <div className="mb-4">
+          <button className="btn btn-primary" onClick={onpenCreateModal}>
+            Ajouter un utilisateur
+          </button>
+        </div>
+        {users.length > 0 ? (
+          <div>
+            {users.map((user ) => (
+              <div
+                key={user.id }
+                className="mb-2 p-5 border-2 border-base-200 rounded-3xl flex justify-between items-center"
+              >
+                <div className="flex flex-col gap-2">
+                  <strong className="text-lg">{user.nom}</strong>
+                  <div className="badge badge-primary text-sm">{user.role}</div>
+                </div>
+                <div className="flex gap-2 ">
 
-      <CustomModal
-        title={editMode ? "Modifier utilisateur" : "Nouvel utilisateur"}
+                  <button aria-label="text" className="btn btn-sm btn-error" onClick={() => deleteUser(user.id)}>
+                    <Trash className="w-4 h-4" />
+
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState iconComponent={Group} message="Aucun utilisateur" />
+        )}
+      </div>
+
+      <UtilisateurModal
+        name={name}
+        prenoms={prenoms}
+        email={email}
+        telephone={telephone}
+        role={role}
+        motDePasse={motDePasse}
+        confirme={confirme}
         loading={loading}
+        onChangeName={setName}
+        onChangePrenoms={setPrenoms}
+        onChangeTelephone={setTelephone}
+        onChangeRole={setRole}
+        onChangeEmail={setEmail}
+        onChangePassword={setMotDePasse}
+        onChangeConfirme={setConfirme}
         onClose={closeModal}
-        onSubmit={editMode ? updateUser : createUser}
+        onSubmit={editMode ? modifierCategory : createUser}
         editMode={editMode}
-        onReset={resetForm}
-        submitLabel="Enregistrer"
-        fields={[
-          {
-            label: "Nom",
-            value: nom,
-            onChange: setNom,
-            required: true,
-          },
-          {
-            label: "Prénoms",
-            value: prenoms,
-            onChange: setPrenoms,
-            required: true,
-          },
-          {
-            label: "Téléphone",
-            value: telephone,
-            onChange: setTelephone,
-            required: true,
-          },
-          {
-            label: "Rôle",
-            type: "select",
-            value: role,
-            onChange: setRole,
-            required: true,
-            options: [
-              { label: "Admin", value: "admin" },
-              { label: "Gestionnaire", value: "gestionnaire" },
-              { label: "Agent", value: "agent" },
-            ],
-          },
-          {
-            label: "Email",
-            type: "email",
-            value: email,
-            onChange: setEmail,
-            required: true,
-          },
-          {
-            label: "Mot de passe",
-            type: "password",
-            value: password,
-            onChange: setPassword,
-            required: true,
-          },
-          {
-            label: "Confirmer mot de passe",
-            type: "password",
-            value: confirmPassword,
-            onChange: setConfirmPassword,
-            required: true,
-          },
-          
-        ]}
+        onReset={onReset}
       />
     </Wrapper>
   );
 };
 
-export default Page;
+export default page;

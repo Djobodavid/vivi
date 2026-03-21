@@ -1,19 +1,17 @@
-import { Icon } from "lucide-react";
 import React from "react";
 
 interface EmptyStateProps {
-  iconComponent: keyof typeof Icon;
+  iconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   message: string;
 }
 
-const EmptyState = ({ iconComponent, message }: EmptyStateProps) => {
-  const SelectedIcon = Icon[iconComponent];
+const EmptyState = ({ iconComponent: Icon, message }: EmptyStateProps) => {
   return (
     <div className="w-full h-full my-20 flex justify-center items-center flex-col">
-      <div>
-        <SelectedIcon strokeWith={1} className="w-30 h-30 text-primary" />
+      <div className="wiggle-animation">
+        <Icon strokeWidth={1} className="w-30 h-30 text-primary" />
       </div>
-      <p className="text-sm ">{message}</p>
+      <p className="text-sm">{message}</p>
     </div>
   );
 };

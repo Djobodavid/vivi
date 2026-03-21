@@ -12,7 +12,6 @@ export const UserSchema = pgTable("utilisateur", {
   prenom: varchar("prenom").notNull(),
   telephone: varchar("telephone").notNull(),
   email: varchar("email").notNull(),
-  image: varchar("image"),
   role: varchar("role").notNull(),
   motDePasse: varchar("mot_pass").notNull(),
 });
@@ -34,11 +33,13 @@ export const FournisseurSchema = pgTable("fournisseur", {
 export const UniteSchema = pgTable("unite", {
   id: uuid("id").primaryKey(),
   nom: varchar("unite").notNull(),
+  description: varchar("description")
 });
 
 export const CategorySchema = pgTable("category", {
   id: uuid("id").primaryKey(),
   nom: varchar("category").notNull(),
+  description: varchar("description")
 });
 
 export const ProduitSchema = pgTable("produit", {

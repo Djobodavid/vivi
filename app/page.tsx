@@ -3,6 +3,8 @@
 import { useState } from "react";
 import CustomModal from "./components/Modal";
 import Wrapper from "./components/Wrapper";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -19,12 +21,29 @@ export default function Home() {
     (document.getElementById("custom_modal") as HTMLDialogElement)?.close();
   };
 
-  const createConnexion = () => {};
+  const createConnexion = async () => {
+    try {
+     
+
+      const res = await axios.post("/api/auth/login", {
+        email: email,
+        motDePasse: password,
+      });
+      toast.success("Connexion réussie");
+      closeModal();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la connexion");
+
+    }
+  };
 
   return (
     <Wrapper>
       <div className="flex flex-col justify-center items-center ">
-        <h3 className="mt-10 font-bold">Cliquez sur le bouton se connecter pour vous connecter</h3>
+        <h3 className="mt-10 font-bold">
+          Cliquez sur le bouton se connecter pour vous connecter
+        </h3>
         <div className="w-full mt-30 flex items-center justify-center">
           <button
             className="btn btn-primary flex justify-center items-center"
