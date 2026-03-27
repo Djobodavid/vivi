@@ -5,7 +5,7 @@ import Wrapper from "../components/Wrapper";
 import axios from "axios";
 import UtilisateurModal from "../components/UseuModal";
 import { toast } from "react-toastify";
-import { Group, Trash, User } from "lucide-react";
+import { Group, Pencil, Trash, User } from "lucide-react";
 import EmptyState from "../components/EmptyState";
 
 const page = () => {
@@ -88,18 +88,18 @@ const page = () => {
   };
 
   const deleteUser = async (id: string) => {
-  try {
-    if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
+    try {
+      if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
 
-    await axios.delete("/api/auth/signup", { data: { id } }); // ⚡ envoi id dans le corps
+      await axios.delete("/api/auth/signup", { data: { id } }); // ⚡ envoi id dans le corps
 
-    toast.success("Utilisateur supprimé avec succès");
-    loadUsers(); // recharge la liste
-  } catch (error) {
-    console.error("Erreur lors de la suppression :", error);
-    toast.error("Impossible de supprimer l'utilisateur");
-  }
-};
+      toast.success("Utilisateur supprimé avec succès");
+      loadUsers(); // recharge la liste
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+      toast.error("Impossible de supprimer l'utilisateur");
+    }
+  };
 
   return (
     <Wrapper>
@@ -110,25 +110,45 @@ const page = () => {
           </button>
         </div>
         {users.length > 0 ? (
-          <div>
-            {users.map((user ) => (
-              <div
-                key={user.id }
-                className="mb-2 p-5 border-2 border-base-200 rounded-3xl flex justify-between items-center"
-              >
-                <div className="flex flex-col gap-2">
-                  <strong className="text-lg">{user.nom}</strong>
-                  <div className="badge badge-primary text-sm">{user.role}</div>
-                </div>
-                <div className="flex gap-2 ">
+          <div className="overflow-x-auto">
+            <table className="table table-zebra border border-base-300">
+              <thead className="bg-base-200">
+                <tr>
+                  <th className="border border-base-300">Nom</th>
+                  <th className="border border-base-300">Rôle</th>
+                  <th className="border border-base-300 text-end">Actions</th>
+                </tr>
+              </thead>
 
-                  <button aria-label="text" className="btn btn-sm btn-error" onClick={() => deleteUser(user.id)}>
-                    <Trash className="w-4 h-4" />
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="border border-base-300 font-semibold">
+                      {user.nom}
+                    </td>
 
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <td className="border border-base-300">
+                      <span className="badge badge-primary text-sm">
+                        {user.role}
+                      </span>
+                    </td>
+
+                    <td className="border border-base-300">
+                      <div className="flex justify-end gap-2">
+
+                        <button
+                          aria-label="delete"
+                          className="btn btn-sm btn-error"
+                          onClick={() => deleteUser(user.id)}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <EmptyState iconComponent={Group} message="Aucun utilisateur" />

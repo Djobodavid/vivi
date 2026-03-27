@@ -11,28 +11,66 @@ type Props ={
     editMode?: boolean
 }
 
-const CategorieModal = ({ name, description, loading, onclose, onchangeName, onchangeDescription, onSubmit, editMode }: Props) => {
+const CategorieModal = ({
+  name,
+  description,
+  loading,
+  onclose,
+  onchangeName,
+  onchangeDescription,
+  onSubmit,
+  editMode
+}: Props) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // empêche le reload
+    onSubmit();
+  };
+
   return (
-   
-      
-      <dialog id="category_modal" className="modal">
-        <div className="modal-box">
-          <form method="dialog">
-            {/* if there is a button in form, it will close the modal */}
-            <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onclose}>
-              ✕
-            </button>
-          </form>
-          <h3 className="font-bold text-lg mb-4">{editMode ? 'Modifier la catégorie' : 'Nouvelle catégorie'}</h3>
-          <input type="text" placeholder="Nom" value={name} onChange={(e) => onchangeName(e.target.value)} className="input input-bordered w-full mb-4" />
-          <input type="text" placeholder="Description" value={description} onChange={(e) => onchangeDescription(e.target.value)} className="input input-bordered w-full mb-4" />
-          <button className="btn btn-primary " onClick={onSubmit} disabled={loading}>
+    <dialog id="category_modal" className="modal">
+      <div className="modal-box">
+        <form onSubmit={handleSubmit}>
+          {/* bouton fermer */}
+          <button
+            type="button"
+            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            onClick={onclose}
+          >
+            ✕
+          </button>
+
+          <h3 className="font-bold text-lg mb-4">
+            {editMode ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
+          </h3>
+
+          <input
+            type="text"
+            placeholder="Nom"
+            value={name}
+            onChange={(e) => onchangeName(e.target.value)}
+            className="input input-bordered w-full mb-4"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={description}
+            onChange={(e) => onchangeDescription(e.target.value)}
+            className="input input-bordered w-full mb-4"
+            required
+          />
+
+          <button
+            type="submit" // ← important pour que required fonctionne
+            className="btn btn-primary"
+            disabled={loading}
+          >
             {loading ? 'Enregistrement...' : editMode ? 'Modifier' : 'Enregistrer'}
           </button>
-        </div>
-      </dialog>
-    
+        </form>
+      </div>
+    </dialog>
   );
 };
 
-export default CategorieModal;
+export default CategorieModal

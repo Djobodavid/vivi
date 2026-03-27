@@ -5,7 +5,8 @@ import Wrapper from "../components/Wrapper";
 import axios from "axios";
 import UniteModal from "../components/unitModal";
 import { toast } from "react-toastify";
-import { Trash } from "lucide-react";
+import { Group, Pencil, Trash } from "lucide-react";
+import EmptyState from "../components/EmptyState";
 
 const page = () => {
   const [name, setName] = useState("");
@@ -86,24 +87,57 @@ const deleteUnite = async (id: string) => {
           <button className="btn btn-primary" onClick={onpenCreateModal}>
             Ajouter une unité
           </button>
-        </div>
-        {unite.map((unite) => (
-          <div
-            key={unite.id}
-            className="mb-2 p-5 border-2 border-base-200 rounded-3xl flex justify-between items-center"
-          >
-            <div className="flex flex-col gap-2">
-                  <strong className="text-lg">{unite.nom}</strong>
-                  <div className="badge badge-primary text-sm">{unite.description}</div>
-                </div>
-                <button aria-label="text" className="btn btn-sm btn-error" onClick={() => deleteUnite(unite.id)}>
-                    <Trash className="w-4 h-4" />
+       </div>
+{unite.length > 0 ? (
+  <div className="overflow-x-auto">
+    <table className="table table-zebra border border-base-300">
+      <thead className="bg-base-200">
+        <tr>
+          <th className="border border-base-300">Nom</th>
+          <th className="border border-base-300">Description</th>
+          <th className="border border-base-300 text-end">
+            Actions
+          </th>
+        </tr>
+      </thead>
 
-                  </button>
-          </div>
+      <tbody>
+        {unite.map((u) => (
+          <tr key={u.id}>
+            <td className="border border-base-300 font-semibold">
+              {u.nom}
+            </td>
+
+            <td className="border border-base-300">
+              {u.description}
+            </td>
+
+            <td className="border border-base-300">
+              <div className="flex justify-end gap-2">
+
+                {/* 🗑 DELETE */}
+                <button
+                  aria-label="delete"
+                  className="btn btn-sm btn-error"
+                  onClick={() => deleteUnite(u.id)}
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
+
+              </div>
+            </td>
+          </tr>
         ))}
-      </div>
-
+      </tbody>
+    </table>
+  </div>
+) : (
+  <EmptyState
+    iconComponent={Group}
+    message="Aucune unité disponible"
+  />
+)}
+</div>
       <UniteModal
         name={name}
         description={description}

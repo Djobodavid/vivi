@@ -102,7 +102,7 @@ const navLinks: NavLink[] = [
           <div className="p-2">
             <FaBriefcaseMedical className="w-6 h-6 text-primary" />
           </div>
-          <span className="font-bold text-xl">DermaStok</span>
+          <span className="font-bold text-xl hidden sm:inline">DermaStok</span>
         </div>
 
         <button
@@ -129,6 +129,7 @@ const navLinks: NavLink[] = [
             <X className="w-4 h-4" />
           </button>
         </div>
+        <span className="font-bold text-primary text-lg flex justify-center cursor-pointer" onClick={() => setMenuOpen(!menuOpen)}>DermaStok</span>
         {renderLinks("btn")}
       </div>
     </div>

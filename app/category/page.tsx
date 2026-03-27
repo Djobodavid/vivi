@@ -8,7 +8,6 @@ import { Divide, Group, Pencil, Trash } from "lucide-react";
 import EmptyState from "../components/EmptyState";
 import { toast } from "react-toastify";
 
-
 const page = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -45,7 +44,7 @@ const page = () => {
     setEditMode(false);
     setName("");
     setDescription("");
-    
+
     (document.getElementById("category_modal") as HTMLDialogElement)?.close();
   };
 
@@ -69,40 +68,42 @@ const page = () => {
     setName(category.nom);
     setSelectedId(category.id);
     setDescription(category.description);
-    (document.getElementById("category_modal") as HTMLDialogElement)?.showModal();
+    (
+      document.getElementById("category_modal") as HTMLDialogElement
+    )?.showModal();
   };
+
   const modifierCategory = async () => {
-  try {
-    if (!selectedId) return;
+    try {
+      if (!selectedId) return;
 
+      await axios.put(`/api/settings/categories`, {
+        id: selectedId,
+        nom: name,
+        description: description,
+      });
 
-    await axios.put(`/api/settings/categories`, {
-      id: selectedId,
-      nom: name,
-      description: description,
-    });
+      closeModal();
+      loadCategory();
+      toast.success("Catégorie modifiée avec succès");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la modification");
+    }
+  };
 
-    closeModal();
-    loadCategory();
-    toast.success("Catégorie modifiée avec succès");
-  } catch (error) {
-    console.error(error);
-    toast.error("Erreur lors de la modification");
-  }
-};
+  const deleteCategory = async (id: string) => {
+    try {
+      if (!confirm("Voulez-vous vraiment supprimer cette catégorie ?")) return;
 
-const deleteCategory = async (id: string) => {
-  try {
-    if (!confirm("Voulez-vous vraiment supprimer cette catégorie ?")) return;
-
-    await axios.delete("/api/settings/categories", { data: { id } });
-    toast.success("Catégorie supprimée avec succès");
-    loadCategory();
-  } catch (error) {
-    console.error(error);
-    toast.error("Erreur lors de la suppression");
-  }
-};
+      await axios.delete("/api/settings/categories", { data: { id } });
+      toast.success("Catégorie supprimée avec succès");
+      loadCategory();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la suppression");
+    }
+  };
 
   return (
     <Wrapper>
@@ -113,31 +114,52 @@ const deleteCategory = async (id: string) => {
           </button>
         </div>
         {category.length > 0 ? (
-          <div>
-            {category.map((cat) => (
-              <div
-                key={cat.id}
-                className="mb-2 p-5 border-2 border-base-200 rounded-3xl flex justify-between items-center"
-              >
-                <div>
-                  <strong className="text-lg">{cat.nom}</strong>
-                  <div className="text-sm">{cat.description}</div>
-                </div>
-                <div className="flex gap-2 ">
-                  <button
-                    aria-label="text"
-                    className="btn btn-sm btn-warning"
-                    onClick={() => openEditModal(cat)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button aria-label="text" className="btn btn-sm btn-error" onClick={() => deleteCategory(cat.id)}>
-                    <Trash className="w-4 h-4" />
+          <div className="overflow-x-auto">
+            <table className="table table-zebra border border-base-300">
+              <thead className="bg-base-200">
+                <tr>
+                  <th className="border border-base-300">Nom</th>
+                  <th className="border border-base-300">Description</th>
+                  <th className="border border-base-300 text-end">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
 
-                  </button>
-                </div>
-              </div>
-            ))}
+              <tbody>
+                {category.map((cat) => (
+                  <tr key={cat.id}>
+                    <td className="border border-base-300 font-semibold">
+                      {cat.nom}
+                    </td>
+
+                    <td className="border border-base-300">
+                      {cat.description}
+                    </td>
+
+                    <td className="border border-base-300">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          aria-label="text"
+                          className="btn btn-sm btn-warning"
+                          onClick={() => openEditModal(cat)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          aria-label="text"
+                          className="btn btn-sm btn-error"
+                          onClick={() => deleteCategory(cat.id)}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <EmptyState

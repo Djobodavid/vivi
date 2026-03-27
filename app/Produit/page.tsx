@@ -6,10 +6,6 @@ import ProduitModal from "../components/product";
 
 const Page = () => {
   const [nom, setNom] = useState("");
-  const [description, setDescription] = useState("");
-  const [categorie, setCategorie] = useState("");
-  const [unite, setUnite] = useState("");
-  const [prix, setPrix] = useState("");
 
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -18,30 +14,17 @@ const Page = () => {
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // 🔥 OPTIONS (IMPORTANT)
-  const categories = [
-    { label: "Crème", value: "creme" },
-    { label: "Gel", value: "gel" },
-  ];
-
-  const unites = [
-    { label: "Boîte", value: "boite" },
-    { label: "Flacon", value: "flacon" },
-  ];
-
   // 🔥 IMAGE
   const handleImage = (file: File) => {
     setImage(file);
     setPreview(URL.createObjectURL(file));
   };
 
-  // 🔥 OPEN MODAL
+  // 🔥 OPEN MODAL (CREATE par défaut)
   const openModal = () => {
+    setEditMode(false);
+
     setNom("");
-    setDescription("");
-    setCategorie("");
-    setUnite("");
-    setPrix("");
     setImage(null);
     setPreview(null);
     setOldImage(null);
@@ -49,28 +32,26 @@ const Page = () => {
     (document.getElementById("produit_modal") as HTMLDialogElement)?.showModal();
   };
 
-  // 🔥 CLOSE MODAL
+  // 🔥 CLOSE
   const closeModal = () => {
     (document.getElementById("produit_modal") as HTMLDialogElement)?.close();
   };
 
-  // 🔥 CREATE
-  const createProduit = () => {
+  // 🔥 SUBMIT (sera appelé par tes CRUD plus tard)
+  const handleSubmit = () => {
     setLoading(true);
 
-    console.log({
+    const payload = {
       nom,
-      description,
-      categorie,
-      unite,
-      prix,
       image,
-    });
+    };
+
+    console.log(payload); // tu remplaceras par ton API
 
     setTimeout(() => {
       setLoading(false);
       closeModal();
-    }, 1000);
+    }, 500);
   };
 
   return (
@@ -80,22 +61,11 @@ const Page = () => {
       </button>
 
       <ProduitModal
-        
         nom={nom}
-        description={description}
-        categorie={categorie}
-        unite={unite}
-        prix={prix}
-        categories={categories}
-        unites={unites}
         loading={loading}
         onClose={closeModal}
-        onSubmit={createProduit}
+        onSubmit={handleSubmit}
         onChangeNom={setNom}
-        onChangeDescription={setDescription}
-        onChangeCategorie={setCategorie}
-        onChangeUnite={setUnite}
-        onChangePrix={setPrix}
         onChangeImage={handleImage}
         preview={preview}
         oldImage={oldImage}

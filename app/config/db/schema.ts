@@ -1,5 +1,6 @@
 import {
   integer,
+  numeric,
   pgTable,
   timestamp,
   uuid,
@@ -33,24 +34,19 @@ export const FournisseurSchema = pgTable("fournisseur", {
 export const UniteSchema = pgTable("unite", {
   id: uuid("id").primaryKey(),
   nom: varchar("unite").notNull(),
-  description: varchar("description")
+  description: varchar("description"),
 });
 
 export const CategorySchema = pgTable("category", {
   id: uuid("id").primaryKey(),
   nom: varchar("category").notNull(),
-  description: varchar("description")
+  description: varchar("description"),
 });
 
 export const ProduitSchema = pgTable("produit", {
   id: uuid("id").primaryKey(),
   nom: varchar("nom_produit").notNull(),
   image: varchar("image"),
-  prix_achat: varchar("prix_achat").notNull(),
-  prix_vente: varchar("prix_vente").notNull(),
-  categoryId: uuid("category_id")
-    .references(() => CategorySchema.id)
-    .notNull(),
 });
 
 export const PromotionSchema = pgTable("promotions", {
@@ -71,4 +67,38 @@ export const PromotionSchema = pgTable("promotions", {
   dateFin: timestamp("date_fin").notNull(),
 
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const StockSchema = pgTable("stockage_produit", {
+  id: uuid("id").primaryKey(),
+
+  date_stock: timestamp("date_stock").notNull(),
+
+  quantite_stock: integer("quantite_stock").notNull(),
+  
+  quantite_min_stock: integer("quantite_min_stock").notNull(),
+
+  prix_unitaire_achat: numeric("prix_unitaire_achat").notNull(),
+
+  autre_frais: numeric("autre_frais"),
+
+  observation: varchar("observation"),
+
+  date_expiration: timestamp("date_expiration").notNull(),
+
+  produitId: uuid("produit_id")
+    .references(() => ProduitSchema.id)
+    .notNull(),
+
+  fournisseurId: uuid("fournisseur_id")
+    .references(() => FournisseurSchema.id)
+    .notNull(),
+
+  utilisateurId: uuid("utilisateur_id")
+    .references(() => UserSchema.id)
+    .notNull(),
+
+  uniteId: uuid("unite_id")
+    .references(() => UniteSchema.id)
+    .notNull(),
 });
