@@ -27,7 +27,7 @@ export const ClientSchema = pgTable("client", {
 export const FournisseurSchema = pgTable("fournisseur", {
   id: uuid("id").primaryKey(),
   nom: varchar("nom").notNull(),
-  adresse: varchar("adresse").notNull(),
+  addresse: varchar("addresse").notNull(),
   telephone: varchar("telephone").notNull(),
 });
 

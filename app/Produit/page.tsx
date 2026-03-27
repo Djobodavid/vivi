@@ -20,7 +20,7 @@ const Page = () => {
     setPreview(URL.createObjectURL(file));
   };
 
-  // 🔥 OPEN MODAL (CREATE par défaut)
+
   const openModal = () => {
     setEditMode(false);
 
@@ -32,7 +32,7 @@ const Page = () => {
     (document.getElementById("produit_modal") as HTMLDialogElement)?.showModal();
   };
 
-  // 🔥 CLOSE
+
   const closeModal = () => {
     (document.getElementById("produit_modal") as HTMLDialogElement)?.close();
   };

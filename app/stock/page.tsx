@@ -25,7 +25,7 @@ const Page = () => {
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // 🔥 DATA (à remplacer par API plus tard)
+
   const produits = [
     { label: "Paracétamol", value: "1" },
     { label: "Ibuprofène", value: "2" },
@@ -46,7 +46,6 @@ const Page = () => {
     { label: "Flacon", value: "2" },
   ];
 
-  // 🔥 OPEN MODAL
   const openModal = () => {
     setEditMode(false);
 
@@ -65,12 +64,12 @@ const Page = () => {
     (document.getElementById("stock_modal") as HTMLDialogElement)?.showModal();
   };
 
-  // 🔥 CLOSE
+
   const closeModal = () => {
     (document.getElementById("stock_modal") as HTMLDialogElement)?.close();
   };
 
-  // 🔥 SUBMIT
+ 
   const handleSubmit = () => {
     setLoading(true);
 
@@ -102,7 +101,7 @@ const Page = () => {
         Ajouter un stock
       </button>
 
-      {/* 🔥 TABLE plus tard ici */}
+
 
       <StockModal
         dateStock={dateStock}
