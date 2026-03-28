@@ -57,7 +57,7 @@ const CategorieModal = ({
             value={description}
             onChange={(e) => onchangeDescription(e.target.value)}
             className="input input-bordered w-full mb-4"
-            required
+            
           />
 
           <button

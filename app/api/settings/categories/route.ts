@@ -8,7 +8,7 @@ export const POST = async (req: Request) => {
     const body = await req.json();
     const { nom, description } = body;
 
-    if (!nom || !description) {
+    if (!nom) {
       return new Response(
         JSON.stringify({ message: "Données invalides" }),
         { status: 400 }

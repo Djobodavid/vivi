@@ -26,10 +26,7 @@ export const POST = async (req: Request) => {
     return new Response(JSON.stringify(reponse), { status: 201 });
   } catch (error) {
     console.error(error);
-     return Response.json(
-      { message: "Erreur serveur" },
-      { status: 500 }
-    );
+    return Response.json({ message: "Erreur de la création du fournisseur" }, { status: 500 });
   }
 };
 
@@ -39,7 +36,7 @@ export const GET = async () => {
 
     return new Response(
       JSON.stringify({
-        message: "Liste des clients récupérée avec succès",
+        message: "Liste des fournisseurs récupérée avec succès",
         data: clients,
       }),
       { status: 200 },
@@ -47,7 +44,7 @@ export const GET = async () => {
   } catch (error) {
     console.error(error);
 
-    return new Response(JSON.stringify({ message: "Erreur serveur" }), {
+    return new Response(JSON.stringify({ message: "Erreur dans la création du fournisseur" }), {
       status: 500,
     });
   }
@@ -73,7 +70,7 @@ export const PUT = async (req: Request) => {
     );
   } catch (error) {
     console.error(error);
-    return new Response(JSON.stringify({ message: "Erreur serveur" }), {
+    return new Response(JSON.stringify({ message: "Erreur dans la modification du fournisseur" }), {
       status: 500,
     });
   }
@@ -91,7 +88,9 @@ export const DELETE = async (req: Request) => {
       );
     }
 
-    await drizzleDb.delete(FournisseurSchema).where(eq(FournisseurSchema.id, id));
+    await drizzleDb
+      .delete(FournisseurSchema)
+      .where(eq(FournisseurSchema.id, id));
 
     return new Response(
       JSON.stringify({ message: "Fournisseur supprimée avec succès" }),
