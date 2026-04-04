@@ -2,6 +2,7 @@ import { drizzleDb } from "@/app/config/db";
 import { UserSchema } from "@/app/config/db/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import  jwt from "jsonwebtoken";
 
 export const POST = async (req: Request) => {
   try {
@@ -36,13 +37,30 @@ export const POST = async (req: Request) => {
       );
     }
 
+     // 🔹 Générer JWT
+    const token = jwt.sign(
+      {
+        id: utilisateur.id,
+        email: utilisateur.email,
+      },
+      process.env.JWT_SECRET!, // ton secret depuis .env
+      { expiresIn: "1d" } // durée de validité
+    );
+
+    // Retourner le token
     return new Response(
       JSON.stringify({
         message: "Connexion réussie",
-        user: utilisateur,
+        user: {
+          id: utilisateur.id,
+          email: utilisateur.email,
+          nom: utilisateur.nom, // selon ce que tu veux exposer
+        },
+        token,
       }),
       { status: 200 }
     );
+
   } catch (error) {
     return new Response(
       JSON.stringify({

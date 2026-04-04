@@ -43,7 +43,9 @@ export const GET = async () => {
       }),
       { status: 200 },
     );
-  } catch (error) {}
+  } catch (error) {
+    
+  }
 };
 
 export const PUT = async (req: Request) => {

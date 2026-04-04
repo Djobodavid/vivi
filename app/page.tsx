@@ -29,6 +29,12 @@ export default function Home() {
         email: email,
         motDePasse: password,
       });
+
+       const data = res.data;
+
+      // 🔹 Stocker le token
+    localStorage.setItem("token", data.token);
+
       toast.success("Connexion réussie");
       closeModal();
     } catch (error) {

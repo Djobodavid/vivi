@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Wrapper from "../components/Wrapper";
-import stockModal from "../components/stockModal";
 import StockModal from "../components/stockModal";
+import EmptyState from "../components/EmptyState";
+import { Group } from "lucide-react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Page = () => {
   const [dateStock, setDateStock] = useState("");
@@ -14,37 +17,79 @@ const Page = () => {
 
   const [prixUnitaire, setPrixUnitaire] = useState("");
   const [autreFrais, setAutreFrais] = useState("");
-
+  const[stocks,setStocks]=useState<any[]>([]);
   const [observation, setObservation] = useState("");
 
+  const [produits, setProduits]=useState<{ label: string; value: string }[]>([]);
   const [produitId, setProduitId] = useState("");
   const [fournisseurId, setFournisseurId] = useState("");
+  const [fournisseur, setFournisseur] = useState<{ label: string; value: string }[]>([]);
   const [utilisateurId, setUtilisateurId] = useState("");
   const [uniteId, setUniteId] = useState("");
+  const [unites, setUnites] = useState<{ label: string; value: string }[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
 
-  const produits = [
-    { label: "Paracétamol", value: "1" },
-    { label: "Ibuprofène", value: "2" },
-  ];
+  const loadProduits = async () => {
+  try {
+    const res = await axios.get("/api/produits");
+    // On transforme pour le select (label/value)
+    const options = res.data.data.map((p: any) => ({
+      label: p.nom,
+      value: p.id,
+    }));
+    setProduits(options);
+  } catch (error: any) {
+    console.error(error.message);
+    toast.error("Erreur lors du chargement des produits : " + error.message);
+  }
+};
 
-  const fournisseurs = [
-    { label: "Pharma Togo", value: "1" },
-    { label: "Med Supply", value: "2" },
-  ];
+const loadFournisseurs = async () => {
+  try {
+    const res = await axios.get("/api/fournisseur");
+    // On transforme pour le select (label/value)
+    const options = res.data.data.map((p: any) => ({
+      label: p.nom,
+      value: p.id,
+    }));
+    setFournisseur(options);
+  } catch (error: any) {
+    console.error(error.message);
+    toast.error("Erreur lors du chargement des fournisseur : " + error.message);
+  }
+};
 
-  const utilisateurs = [
-    { label: "Admin", value: "1" },
-    { label: "Docteur", value: "2" },
-  ];
+const loadUnites = async () => {
+  try {
+    const res = await axios.get("/api/settings/unites");
+    // On transforme pour le select (label/value)
+    const options = res.data.data.map((p: any) => ({
+      label: p.nom,
+      value: p.id,
+    }));
+    setUnites(options);
+  } catch (error: any) {
+    console.error(error.message);
+    toast.error("Erreur lors du chargement des unités : " + error.message);
+  }
+};
 
-  const unites = [
-    { label: "Boîte", value: "1" },
-    { label: "Flacon", value: "2" },
-  ];
+useEffect(() => {
+  loadProduits();
+  loadFournisseurs()
+  loadUnites()
+  loadStock(); // si tu veux aussi charger les stocks
+}, []);
+
+  
+  
+
+  const loadStock = async () => {
+ 
+};
 
   const openModal = () => {
     setEditMode(false);
@@ -101,6 +146,12 @@ const Page = () => {
         Ajouter un stock
       </button>
 
+    
+          
+  <EmptyState
+    iconComponent={Group}
+    message="Aucun stock disponible"
+  />
 
 
       <StockModal
@@ -113,11 +164,9 @@ const Page = () => {
         observation={observation}
         produitId={produitId}
         fournisseurId={fournisseurId}
-        utilisateurId={utilisateurId}
         uniteId={uniteId}
         produits={produits}
-        fournisseurs={fournisseurs}
-        utilisateurs={utilisateurs}
+        fournisseurs={fournisseur}
         unites={unites}
         loading={loading}
         editMode={editMode}
@@ -132,7 +181,6 @@ const Page = () => {
         onChangeObservation={setObservation}
         onChangeProduit={setProduitId}
         onChangeFournisseur={setFournisseurId}
-        onChangeUtilisateur={setUtilisateurId}
         onChangeUnite={setUniteId}
       />
     </Wrapper>

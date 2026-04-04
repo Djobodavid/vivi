@@ -18,12 +18,11 @@ type Props = {
 
   produitId: string;
   fournisseurId: string;
-  utilisateurId: string;
   uniteId: string;
 
   produits: Option[];
   fournisseurs: Option[];
-  utilisateurs: Option[];
+
   unites: Option[];
 
   loading: boolean;
@@ -42,7 +41,6 @@ type Props = {
 
   onChangeProduit: (v: string) => void;
   onChangeFournisseur: (v: string) => void;
-  onChangeUtilisateur: (v: string) => void;
   onChangeUnite: (v: string) => void;
 };
 
@@ -56,11 +54,9 @@ const StockModal = ({
   dateExpiration,
   produitId,
   fournisseurId,
-  utilisateurId,
   uniteId,
   produits,
   fournisseurs,
-  utilisateurs,
   unites,
   loading,
   editMode,
@@ -75,7 +71,6 @@ const StockModal = ({
   onChangeDateExpiration,
   onChangeProduit,
   onChangeFournisseur,
-  onChangeUtilisateur,
   onChangeUnite,
 }: Props) => {
   const handleSubmit = (e: React.FormEvent) => {
@@ -195,20 +190,7 @@ const StockModal = ({
             ))}
           </select>
 
-          {/* UTILISATEUR */}
-          <select
-            value={utilisateurId}
-            onChange={(e) => onChangeUtilisateur(e.target.value)}
-            className="select select-bordered w-full"
-            required
-          >
-            <option value="">Utilisateur</option>
-            {utilisateurs.map((u, i) => (
-              <option key={i} value={u.value}>
-                {u.label}
-              </option>
-            ))}
-          </select>
+          
 
           {/* UNITE */}
           <select
