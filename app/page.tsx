@@ -21,28 +21,25 @@ export default function Home() {
     (document.getElementById("custom_modal") as HTMLDialogElement)?.close();
   };
 
-  const createConnexion = async () => {
-    try {
-     
+const createConnexion = async () => {
+  try {
+    const res = await axios.post("/api/auth/login", {
+      email: email,
+      motDePasse: password,
+    });
 
-      const res = await axios.post("/api/auth/login", {
-        email: email,
-        motDePasse: password,
-      });
+    toast.success(res.data.message); // 🔥 message backend
+    closeModal();
 
-       const data = res.data;
+  } catch (error: any) {
+    console.error(error);
 
-      // 🔹 Stocker le token
-    localStorage.setItem("token", data.token);
+    const message =
+      error.response?.data?.message || "Erreur lors de la connexion";
 
-      toast.success("Connexion réussie");
-      closeModal();
-    } catch (error) {
-      console.error(error);
-      toast.error("Erreur lors de la connexion");
-
-    }
-  };
+    toast.error(message); // 🔥 message dynamique
+  }
+};
 
   return (
     <Wrapper>

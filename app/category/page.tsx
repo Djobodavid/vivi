@@ -19,17 +19,26 @@ const page = () => {
   const loadCategory = async () => {
     try {
       const res = await axios.get("/api/settings/categories");
-      console.log("RESPONSE :", res.data); // 🔍 debug
 
-      setCategory(res.data.data); // stocke les catégories dans le state
-    } catch (error) {
-      console.error("Erreur lors du chargement des catégories :", error);
+      if (res.data.success) {
+        setCategory(res.data.data);
+      }
+    } catch (error: any) {
+      console.error(error);
+
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else if (error.request) {
+        toast.error("Serveur inaccessible");
+      } else {
+        toast.error("Erreur inattendue");
+      }
     }
   };
 
   useEffect(() => {
-    loadCategory(); // charge les catégories au montage du composant
-  }, []); // le tableau vide [] signifie que ça ne s'exécute qu'une fois au montage
+    loadCategory();
+  }, []);
 
   const onpenCreateModal = () => {
     setEditMode(false);
@@ -50,16 +59,29 @@ const page = () => {
 
   const createCategory = async () => {
     try {
+      if (!name) {
+        toast.error("Le nom est requis");
+        return;
+      }
+
       const res = await axios.post("/api/settings/categories", {
         nom: name,
-        description: description,
+        description,
       });
 
+      toast.success(res.data.message);
       closeModal();
       loadCategory();
-      toast.success("Catégorie créée avec succès");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else if (error.request) {
+        toast.error("Serveur inaccessible");
+      } else {
+        toast.error("Erreur inattendue");
+      }
     }
   };
 
@@ -75,20 +97,30 @@ const page = () => {
 
   const modifierCategory = async () => {
     try {
-      if (!selectedId) return;
+      if (!selectedId) {
+        toast.error("Aucune catégorie sélectionnée");
+        return;
+      }
 
-      await axios.put(`/api/settings/categories`, {
+      const res = await axios.put("/api/settings/categories", {
         id: selectedId,
         nom: name,
-        description: description,
+        description,
       });
 
+      toast.success(res.data.message);
       closeModal();
       loadCategory();
-      toast.success("Catégorie modifiée avec succès");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erreur lors de la modification");
+
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else if (error.request) {
+        toast.error("Serveur inaccessible");
+      } else {
+        toast.error("Erreur inattendue");
+      }
     }
   };
 
@@ -96,12 +128,22 @@ const page = () => {
     try {
       if (!confirm("Voulez-vous vraiment supprimer cette catégorie ?")) return;
 
-      await axios.delete("/api/settings/categories", { data: { id } });
-      toast.success("Catégorie supprimée avec succès");
+      const res = await axios.delete("/api/settings/categories", {
+        data: { id },
+      });
+
+      toast.success(res.data.message);
       loadCategory();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erreur lors de la suppression");
+
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else if (error.request) {
+        toast.error("Serveur inaccessible");
+      } else {
+        toast.error("Erreur inattendue");
+      }
     }
   };
 
@@ -120,9 +162,7 @@ const page = () => {
                 <tr>
                   <th className="border border-base-300">Nom</th>
                   <th className="border border-base-300">Description</th>
-                  <th className="border border-base-300 text-end">
-                    Actions
-                  </th>
+                  <th className="border border-base-300 text-end">Actions</th>
                 </tr>
               </thead>
 

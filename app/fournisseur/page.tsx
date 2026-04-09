@@ -17,19 +17,28 @@ const Page = () => {
   const [fournisseurs, setFournisseurs] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // 🔹 LOAD FOURNISSEURS
-  const loadFournisseurs = async () => {
-    try {
-      const res = await axios.get("/api/fournisseur");
-      setFournisseurs(res.data.data || []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+const loadFournisseurs = async () => {
+  try {
+    const res = await axios.get("/api/fournisseur");
 
-  useEffect(() => {
-    loadFournisseurs();
-  }, []);
+    if (res.data.success) {
+      setFournisseurs(res.data.data);
+    }
+
+  } catch (error: any) {
+    console.error(error);
+
+    const message =
+      error.response?.data?.message ||
+      (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+    toast.error(message);
+  }
+};
+
+useEffect(() => {
+  loadFournisseurs();
+}, []);
 
   // 🔹 OPEN CREATE
   const openModal = () => {
@@ -61,68 +70,94 @@ const Page = () => {
     (document.getElementById("custom_modal") as HTMLDialogElement)?.close();
   };
 
-  // 🔹 CREATE
-  const createFournisseur = async () => {
-    if (!nom || !telephone || !addresse) {
-      return toast.error("Remplis tous les champs");
-    }
+ const createFournisseur = async () => {
+  if (!nom || !telephone || !addresse) {
+    toast.error("Remplis tous les champs");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      await axios.post("/api/fournisseur", {
-        nom,
-        telephone,
-        addresse,
-      });
+  setLoading(true);
 
-      toast.success("Fournisseur créé avec succès");
-      closeModal();
-      loadFournisseurs();
-    } catch (error) {
-      console.error(error);
-      toast.error("Erreur lors de la création");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const res = await axios.post("/api/fournisseur", {
+      nom,
+      telephone,
+      addresse,
+    });
 
-  // 🔹 UPDATE
+    toast.success(res.data.message); // 🔥 message backend
+    closeModal();
+    loadFournisseurs();
+
+  } catch (error: any) {
+    console.error(error);
+
+    const message =
+      error.response?.data?.message ||
+      (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+    toast.error(message);
+
+  } finally {
+    setLoading(false);
+  }
+};
+
   const updateFournisseur = async () => {
-    if (!selectedId || !nom || !telephone || !addresse) return;
+  if (!selectedId || !nom || !telephone || !addresse) {
+    toast.error("Remplis tous les champs");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      await axios.put("/api/fournisseur", {
-        id: selectedId,
-        nom,
-        telephone,
-        addresse,
-      });
+  setLoading(true);
 
-      toast.success("Fournisseur modifié avec succès");
-      closeModal();
-      loadFournisseurs();
-    } catch (error) {
-      console.error(error);
-      toast.error("Erreur lors de la modification");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const res = await axios.put("/api/fournisseur", {
+      id: selectedId,
+      nom,
+      telephone,
+      addresse,
+    });
 
-  // 🔹 DELETE
-  const deleteFournisseur = async (id: string) => {
+    toast.success(res.data.message);
+    closeModal();
+    loadFournisseurs();
+
+  } catch (error: any) {
+    console.error(error);
+
+    const message =
+      error.response?.data?.message ||
+      (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+    toast.error(message);
+
+  } finally {
+    setLoading(false);
+  }
+};
+
+ const deleteFournisseur = async (id: string) => {
+  try {
     if (!confirm("Supprimer ce fournisseur ?")) return;
 
-    try {
-      await axios.delete("/api/fournisseur", { data: { id } });
-      toast.success("Fournisseur supprimé");
-      loadFournisseurs();
-    } catch (error) {
-      console.error(error);
-      toast.error("Erreur lors de la suppression");
-    }
-  };
+    const res = await axios.delete("/api/fournisseur", {
+      data: { id },
+    });
+
+    toast.success(res.data.message);
+    loadFournisseurs();
+
+  } catch (error: any) {
+    console.error(error);
+
+    const message =
+      error.response?.data?.message ||
+      (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+    toast.error(message);
+  }
+};
 
   return (
     <Wrapper>

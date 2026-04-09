@@ -2,71 +2,78 @@ import { drizzleDb } from "@/app/config/db";
 import { UserSchema } from "@/app/config/db/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import  jwt from "jsonwebtoken";
 
 export const POST = async (req: Request) => {
   try {
     const body = await req.json();
     const { email, motDePasse } = body;
 
-    // chercher utilisateur
-    const user = await drizzleDb
+    // Vérification des champs
+    if (!email || !motDePasse) {
+      return Response.json(
+        {
+          success: false,
+          message: "Email et mot de passe requis",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Chercher utilisateur
+    const users = await drizzleDb
       .select()
       .from(UserSchema)
       .where(eq(UserSchema.email, email));
 
-    if (user.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "Utilisateur non trouvé" }),
+    if (users.length === 0) {
+      return Response.json(
+        {
+          success: false,
+          message: "Utilisateur non trouvé",
+        },
         { status: 404 }
       );
     }
 
-    const utilisateur = user[0];
+    const utilisateur = users[0];
 
-    // comparer mot de passe
+    // Vérifier mot de passe
     const isPasswordValid = await bcrypt.compare(
       motDePasse,
       utilisateur.motDePasse
     );
 
     if (!isPasswordValid) {
-      return new Response(
-        JSON.stringify({ message: "Mot de passe incorrect" }),
+      return Response.json(
+        {
+          success: false,
+          message: "Mot de passe incorrect",
+        },
         { status: 401 }
       );
     }
 
-     // 🔹 Générer JWT
-    const token = jwt.sign(
+    // Succès
+    return Response.json(
       {
-        id: utilisateur.id,
-        email: utilisateur.email,
-      },
-      process.env.JWT_SECRET!, // ton secret depuis .env
-      { expiresIn: "1d" } // durée de validité
-    );
-
-    // Retourner le token
-    return new Response(
-      JSON.stringify({
+        success: true,
         message: "Connexion réussie",
-        user: {
-          id: utilisateur.id,
+        data: {
           email: utilisateur.email,
-          nom: utilisateur.nom, // selon ce que tu veux exposer
         },
-        token,
-      }),
+      },
       { status: 200 }
     );
 
   } catch (error) {
-    return new Response(
-      JSON.stringify({
-        message: "Erreur lors de la connexion",
-        error,
-      }),
+    console.error(error); // important pour debug serveur
+
+    return Response.json(
+      {
+        success: false,
+        message: "Erreur serveur",
+        error: (error as Error).message, // optionnel en prod
+      },
       { status: 500 }
     );
   }

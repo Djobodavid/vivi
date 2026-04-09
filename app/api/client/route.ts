@@ -3,33 +3,45 @@ import { ClientSchema } from "@/app/config/db/schema";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
 
+function apiResponse(
+  success: boolean,
+  message: string,
+  data?: any,
+  status = 200,
+) {
+  return Response.json({ success, message, data }, { status });
+}
+
 export const POST = async (req: Request) => {
   try {
     const body = await req.json();
     const { nom, adresse, telephone } = body;
 
+    // 🔥 validation
     if (!nom || !adresse || !telephone) {
-      return new Response(JSON.stringify({ message: "Données invalides" }), {
-        status: 400,
-      });
+      return apiResponse(false, "Tous les champs sont requis", null, 400);
     }
 
+    // 🔥 vérifier si client existe déjà
+    const existingClient = await drizzleDb
+      .select()
+      .from(ClientSchema)
+      .where(eq(ClientSchema.telephone, telephone));
+
+    if (existingClient.length > 0) {
+      return apiResponse(false, "Client déjà existant", null, 409);
+    }
+
+    // ✅ création
     const newClient = await drizzleDb
       .insert(ClientSchema)
       .values({ id: uuidv4(), nom, adresse, telephone })
       .returning();
 
-    const reponse = {
-      message: "Client créée avec succès",
-      data: newClient,
-    };
-    return new Response(JSON.stringify(reponse), { status: 201 });
+    return apiResponse(true, "Client créé avec succès", newClient[0], 201);
   } catch (error) {
     console.error(error);
-     return Response.json(
-      { message: "Erreur serveur" },
-      { status: 500 }
-    );
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };
 
@@ -37,71 +49,57 @@ export const GET = async () => {
   try {
     const clients = await drizzleDb.select().from(ClientSchema);
 
-    return new Response(
-      JSON.stringify({
-        message: "Liste des clients récupérée avec succès",
-        data: clients,
-      }),
-      { status: 200 },
-    );
+    return apiResponse(true, "Liste des clients récupérée", clients, 200);
   } catch (error) {
     console.error(error);
-
-    return new Response(JSON.stringify({ message: "Erreur serveur" }), {
-      status: 500,
-    });
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };
-
 export const PUT = async (req: Request) => {
   try {
     const { id, nom, adresse, telephone } = await req.json();
 
-    if (!id)
-      return new Response(JSON.stringify({ message: "ID manquant" }), {
-        status: 400,
-      });
+    if (!id) {
+      return apiResponse(false, "ID manquant", null, 400);
+    }
 
-    await drizzleDb
+    const updated = await drizzleDb
       .update(ClientSchema)
       .set({ nom, adresse, telephone })
-      .where(eq(ClientSchema.id, id));
+      .where(eq(ClientSchema.id, id))
+      .returning();
 
-    return new Response(
-      JSON.stringify({ message: "client modifié avec succès" }),
-      { status: 200 },
-    );
+    if (updated.length === 0) {
+      return apiResponse(false, "Client introuvable", null, 404);
+    }
+
+    return apiResponse(true, "Client modifié avec succès", updated[0], 200);
   } catch (error) {
     console.error(error);
-    return new Response(JSON.stringify({ message: "Erreur serveur" }), {
-      status: 500,
-    });
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };
 
 export const DELETE = async (req: Request) => {
   try {
-    const body = await req.json();
-    const { id } = body;
+    const { id } = await req.json();
 
     if (!id) {
-      return new Response(
-        JSON.stringify({ message: "ID du client manquant" }),
-        { status: 400 },
-      );
+      return apiResponse(false, "ID manquant", null, 400);
     }
 
-    await drizzleDb.delete(ClientSchema).where(eq(ClientSchema.id, id));
+    const deleted = await drizzleDb
+      .delete(ClientSchema)
+      .where(eq(ClientSchema.id, id))
+      .returning();
 
-    return new Response(
-      JSON.stringify({ message: "Client supprimée avec succès" }),
-      { status: 200 },
-    );
+    if (deleted.length === 0) {
+      return apiResponse(false, "Client introuvable", null, 404);
+    }
+
+    return apiResponse(true, "Client supprimé avec succès", null, 200);
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ message: "Erreur serveur lors de la suppression" }),
-      { status: 500 },
-    );
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };

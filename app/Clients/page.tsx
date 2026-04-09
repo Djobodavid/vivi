@@ -20,11 +20,18 @@ const page = () => {
   const loadClient = async () => {
     try {
       const res = await axios.get("/api/client");
-      console.log("RESPONSE :", res.data); // 🔍 debug
 
-      setClients(res.data.data); // stocke les catégories dans le state
-    } catch (error) {
-      console.error("Erreur lors du chargement des catégories :", error);
+      if (res.data.success) {
+        setClients(res.data.data);
+      }
+    } catch (error: any) {
+      console.error(error);
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     }
   };
 
@@ -63,51 +70,81 @@ const page = () => {
 
   const createClient = async () => {
     try {
+      if (!name || !adresse || !telephone) {
+        toast.error("Tous les champs sont requis");
+        return;
+      }
+
       const res = await axios.post("/api/client", {
         nom: name,
-        adresse: adresse,
-        telephone: telephone,
+        adresse,
+        telephone,
       });
 
+      toast.success(res.data.message); // 🔥 message backend
       closeModal();
       loadClient();
-      toast.success("Client créée avec succès");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     }
   };
+
   const modifyClient = async () => {
-    if (!selectedId || !name || !adresse || !telephone) return;
+    if (!selectedId || !name || !adresse || !telephone) {
+      toast.error("Tous les champs sont requis");
+      return;
+    }
 
     setLoading(true);
+
     try {
-      await axios.put("/api/client", {
+      const res = await axios.put("/api/client", {
         id: selectedId,
         nom: name,
         adresse,
         telephone,
       });
-      toast.success("Client modifié avec succès");
+
+      toast.success(res.data.message);
       closeModal();
       loadClient();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erreur lors de la modification");
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   const deleteClient = async (id: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer ce client ?")) return;
-
     try {
-      await axios.delete("/api/client", { data: { id } });
-      toast.success("Client supprimé avec succès");
+      if (!confirm("Voulez-vous vraiment supprimer ce client ?")) return;
+
+      const res = await axios.delete("/api/client", {
+        data: { id },
+      });
+
+      toast.success(res.data.message);
       loadClient();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erreur lors de la suppression");
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     }
   };
   return (

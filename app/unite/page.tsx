@@ -18,9 +18,18 @@ const page = () => {
   const loadUnite = async () => {
     try {
       const res = await axios.get("/api/settings/unites");
-      setUnite(res.data.data);
-    } catch (error) {
+
+      if (res.data.success) {
+        setUnite(res.data.data);
+      }
+    } catch (error: any) {
       console.error(error);
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     }
   };
 
@@ -46,39 +55,50 @@ const page = () => {
 
   const createUnite = async () => {
     try {
-      
+      if (!name) {
+        toast.error("Le nom est requis");
+        return;
+      }
 
       const res = await axios.post("/api/settings/unites", {
         nom: name,
-        description: description,
+        description,
       });
 
+      toast.success(res.data.message); // 🔥 backend
       closeModal();
       loadUnite();
-      toast.success("Unité créée avec succès");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erreur lors de la création de l'unité");
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     }
   };
- 
-const deleteUnite = async (id: string) => {
-  try {
-   
-    if (!confirm("Voulez-vous vraiment supprimer cette unité ?")) return;
 
-   
-    await axios.delete("/api/settings/unites", { data: { id } });
+  const deleteUnite = async (id: string) => {
+    try {
+      if (!confirm("Voulez-vous vraiment supprimer cette unité ?")) return;
 
-    toast.success("Unité supprimée avec succès");
+      const res = await axios.delete("/api/settings/unites", {
+        data: { id },
+      });
 
-    
-    loadUnite();
-  } catch (error) {
-    console.error("Erreur lors de la suppression :", error);
-    toast.error("Impossible de supprimer l'unité");
-  }
-};
+      toast.success(res.data.message);
+      loadUnite();
+    } catch (error: any) {
+      console.error(error);
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
+    }
+  };
 
   return (
     <Wrapper>
@@ -87,57 +107,48 @@ const deleteUnite = async (id: string) => {
           <button className="btn btn-primary" onClick={onpenCreateModal}>
             Ajouter une unité
           </button>
-       </div>
-{unite.length > 0 ? (
-  <div className="overflow-x-auto">
-    <table className="table table-zebra border border-base-300">
-      <thead className="bg-base-200">
-        <tr>
-          <th className="border border-base-300">Nom</th>
-          <th className="border border-base-300">Description</th>
-          <th className="border border-base-300 text-end">
-            Actions
-          </th>
-        </tr>
-      </thead>
+        </div>
+        {unite.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="table table-zebra border border-base-300">
+              <thead className="bg-base-200">
+                <tr>
+                  <th className="border border-base-300">Nom</th>
+                  <th className="border border-base-300">Description</th>
+                  <th className="border border-base-300 text-end">Actions</th>
+                </tr>
+              </thead>
 
-      <tbody>
-        {unite.map((u) => (
-          <tr key={u.id}>
-            <td className="border border-base-300 font-semibold">
-              {u.nom}
-            </td>
+              <tbody>
+                {unite.map((u) => (
+                  <tr key={u.id}>
+                    <td className="border border-base-300 font-semibold">
+                      {u.nom}
+                    </td>
 
-            <td className="border border-base-300">
-              {u.description}
-            </td>
+                    <td className="border border-base-300">{u.description}</td>
 
-            <td className="border border-base-300">
-              <div className="flex justify-end gap-2">
-
-                {/* 🗑 DELETE */}
-                <button
-                  aria-label="delete"
-                  className="btn btn-sm btn-error"
-                  onClick={() => deleteUnite(u.id)}
-                >
-                  <Trash className="w-4 h-4" />
-                </button>
-
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-) : (
-  <EmptyState
-    iconComponent={Group}
-    message="Aucune unité disponible"
-  />
-)}
-</div>
+                    <td className="border border-base-300">
+                      <div className="flex justify-end gap-2">
+                        {/* 🗑 DELETE */}
+                        <button
+                          aria-label="delete"
+                          className="btn btn-sm btn-error"
+                          onClick={() => deleteUnite(u.id)}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState iconComponent={Group} message="Aucune unité disponible" />
+        )}
+      </div>
       <UniteModal
         name={name}
         description={description}

@@ -1,49 +1,68 @@
-import { drizzleDb } from "@/app/config/db/index";
+import { drizzleDb } from "@/app/config/db";
 import { UserSchema } from "@/app/config/db/schema";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
-export const POST = async (req: Request, res: Response) => {
+// helper
+function apiResponse(success: boolean, message: string, data?: any, status = 200) {
+  return Response.json({ success, message, data }, { status });
+}
+
+export const POST = async (req: Request) => {
   try {
-    if (!req.body) {
-      return new Response(JSON.stringify({ message: "Données invalides" }), {
-        status: 400,
-      });
-    }
     const body = await req.json();
-    console.log("BODY REÇU :", body);
 
     const { email, motDePasse, nom, prenom, role, telephone } = body;
 
+    // 🔥 Validation
+    if (!email || !motDePasse || !nom || !prenom) {
+      return apiResponse(false, "Champs obligatoires manquants", null, 400);
+    }
+
+    // 🔥 Vérifier si utilisateur existe déjà
+    const existingUser = await drizzleDb
+      .select()
+      .from(UserSchema)
+      .where(eq(UserSchema.email, email));
+
+    if (existingUser.length > 0) {
+      return apiResponse(false, "Email déjà utilisé", null, 409);
+    }
+
+    // 🔐 Hash password
     const hashedpwd = await bcrypt.hash(motDePasse, 10);
 
     const userData: typeof UserSchema.$inferInsert = {
       id: uuidv4(),
-      nom: nom,
-      prenom: prenom,
-      telephone: telephone,
-      email: email,
-      role: role,
+      nom,
+      prenom,
+      telephone,
+      email,
+      role,
       motDePasse: hashedpwd,
     };
+
     const newUser = await drizzleDb
       .insert(UserSchema)
       .values(userData)
       .returning();
-    const reponse = {
-      message: "Utilisateur créé avec succès",
-      data: newUser,
-    };
-    return new Response(JSON.stringify(reponse), { status: 201 });
+
+    return apiResponse(
+      true,
+      "Utilisateur créé avec succès",
+      { user: newUser[0] },
+      201
+    );
+
   } catch (error) {
-    return new Response(
-      JSON.stringify({
-        message: "Erreur lors de la création de l'utilisateur",
-        error,
-        console: console.error(error),
-      }),
-      { status: 500 },
+    console.error(error);
+
+    return apiResponse(
+      false,
+      "Erreur serveur",
+      null,
+      500
     );
   }
 };
@@ -51,22 +70,18 @@ export const POST = async (req: Request, res: Response) => {
 export const GET = async () => {
   try {
     const users = await drizzleDb
-      .select({ id: UserSchema.id, nom: UserSchema.nom, role: UserSchema.role })
+      .select({
+        id: UserSchema.id,
+        nom: UserSchema.nom,
+        role: UserSchema.role,
+      })
       .from(UserSchema);
 
-    return new Response(
-      JSON.stringify({
-        message: "Liste des utilisateurs récupérée avec succès",
-        data: users,
-      }),
-      { status: 200 }
-    );
+    return apiResponse(true, "Liste récupérée", users, 200);
+
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ message: "Erreur serveur", error }),
-      { status: 500 }
-    );
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };
 
@@ -76,22 +91,22 @@ export const DELETE = async (req: Request) => {
     const { id } = body;
 
     if (!id) {
-      return new Response(JSON.stringify({ message: "ID manquant" }), { status: 400 });
+      return apiResponse(false, "ID manquant", null, 400);
     }
 
-    await drizzleDb
+    const deleted = await drizzleDb
       .delete(UserSchema)
-      .where(eq(UserSchema.id, id));
+      .where(eq(UserSchema.id, id))
+      .returning();
 
-    return new Response(
-      JSON.stringify({ message: "Utilisateur supprimé avec succès" }),
-      { status: 200 }
-    );
+    if (deleted.length === 0) {
+      return apiResponse(false, "Utilisateur introuvable", null, 404);
+    }
+
+    return apiResponse(true, "Utilisateur supprimé", null, 200);
+
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ message: "Erreur suppression", error }),
-      { status: 500 }
-    );
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };

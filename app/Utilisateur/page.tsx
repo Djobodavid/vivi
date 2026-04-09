@@ -23,9 +23,16 @@ const page = () => {
   const loadUsers = async () => {
     try {
       const res = await axios.get("/api/auth/signup");
-      setUsers(res.data.data);
-    } catch (error) {
-      console.error("Erreur lors du chargement des utilisateurs :", error);
+
+      if (res.data.success) {
+        setUsers(res.data.data);
+      }
+    } catch (error: any) {
+      console.error(error);
+
+      const message = error.response?.data?.message || "Erreur de chargement";
+
+      toast.error(message);
     }
   };
   useEffect(() => {
@@ -62,17 +69,22 @@ const page = () => {
       const res = await axios.post("/api/auth/signup", {
         nom: name,
         prenom: prenoms,
-        telephone: telephone,
-        role: role,
-        email: email,
-        motDePasse: motDePasse,
-      } as any);
+        telephone,
+        role,
+        email,
+        motDePasse,
+      });
 
+      toast.success(res.data.message); // 🔥 dynamique
       closeModal();
       loadUsers();
-      toast.success("Utilisateur créé avec succès");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+
+      const message =
+        error.response?.data?.message || "Erreur lors de la création";
+
+      toast.error(message);
     }
   };
   const modifierCategory = () => {};
@@ -91,13 +103,18 @@ const page = () => {
     try {
       if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
 
-      await axios.delete("/api/auth/signup", { data: { id } }); // ⚡ envoi id dans le corps
+      const res = await axios.delete("/api/auth/signup", {
+        data: { id },
+      });
 
-      toast.success("Utilisateur supprimé avec succès");
-      loadUsers(); // recharge la liste
-    } catch (error) {
-      console.error("Erreur lors de la suppression :", error);
-      toast.error("Impossible de supprimer l'utilisateur");
+      toast.success(res.data.message);
+      loadUsers();
+    } catch (error: any) {
+      console.error(error);
+
+      const message = error.response?.data?.message || "Erreur suppression";
+
+      toast.error(message);
     }
   };
 
@@ -135,7 +152,6 @@ const page = () => {
 
                     <td className="border border-base-300">
                       <div className="flex justify-end gap-2">
-
                         <button
                           aria-label="delete"
                           className="btn btn-sm btn-error"

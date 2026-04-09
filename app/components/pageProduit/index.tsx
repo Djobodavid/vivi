@@ -33,14 +33,21 @@ const PageProduit = () => {
 
   const totalPages = Math.ceil(produits.length / itemsPerPage);
 
-  // 🔹 LOAD PRODUITS
   const loadProduits = async () => {
     try {
       const res = await axios.get("/api/produits");
-      setProduits(res.data.data || []);
+
+      if (res.data.success) {
+        setProduits(res.data.data);
+      }
     } catch (error: any) {
-      console.error(error.message);
-      toast.error("Erreur création" + error.message);
+      console.error(error);
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     }
   };
 
@@ -95,68 +102,85 @@ const PageProduit = () => {
     (document.getElementById("produit_modal") as HTMLDialogElement)?.close();
   };
 
-  // 🔹 CREATE
   const createProduit = async () => {
-    if (!nom) return toast.error("Nom requis");
-
-    setLoading(true);
-    try {
-      const formData = { nom, image: image ? image : null }; /*  new FormData();
-      formData.append("nom", nom);
-      if (image) formData.append("image", image); */
-
-      await axios.post("/api/produits", formData);
-
-      toast.success("Produit créé");
-      closeModal();
-      loadProduits();
-    } catch (error: any) {
-      console.error(error.message);
-      toast.error("Erreur création" + error.message);
-    } finally {
-      setLoading(false);
+    if (!nom) {
+      toast.error("Nom requis");
+      return;
     }
-  };
-
-  // 🔹 UPDATE
-  const updateProduit = async () => {
-    if (!selectedId || !nom) return;
 
     setLoading(true);
+
     try {
-      const formData = {
+      const res = await axios.post("/api/produits", {
         nom,
-        image: image ? image : null,
-        id: selectedId,
-      }; /*  new FormData();
-      formData.append("id", selectedId);
-      formData.append("nom", nom);
-      if (image) formData.append("image", image);
- */
-      await axios.put("/api/produits", formData);
+        image: image || null,
+      });
 
-      toast.success("Produit modifié");
+      toast.success(res.data.message);
       closeModal();
       loadProduits();
     } catch (error: any) {
-      console.error(error.message);
-      toast.error("Erreur modification" + error.message);
+      console.error(error);
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 DELETE
-  const deleteProduit = async (id: string) => {
-    if (!confirm("Supprimer ce produit ?")) return;
+  const updateProduit = async () => {
+    if (!selectedId || !nom) {
+      toast.error("Nom requis");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      await axios.delete("/api/produits", { data: { id } });
-      toast.success("Produit supprimé");
+      const res = await axios.put("/api/produits", {
+        id: selectedId,
+        nom,
+        image: image || null,
+      });
+
+      toast.success(res.data.message);
+      closeModal();
       loadProduits();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erreur suppression");
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteProduit = async (id: string) => {
+    try {
+      if (!confirm("Supprimer ce produit ?")) return;
+
+      const res = await axios.delete("/api/produits", {
+        data: { id },
+      });
+
+      toast.success(res.data.message);
+      loadProduits();
+    } catch (error: any) {
+      console.error(error);
+
+      const message =
+        error.response?.data?.message ||
+        (error.request ? "Serveur inaccessible" : "Erreur inattendue");
+
+      toast.error(message);
     }
   };
 
@@ -173,7 +197,9 @@ const PageProduit = () => {
           <table className="table table-zebra border border-base-300">
             <thead className="bg-base-200">
               <tr>
-                <th className="border border-base-300 w-1 whitespace-nowrap">#</th>
+                <th className="border border-base-300 w-1 whitespace-nowrap">
+                  #
+                </th>
                 <th className="border border-base-300">Nom</th>
                 <th className="border border-base-300 w-1 whitespace-nowrap">
                   Image
@@ -185,7 +211,7 @@ const PageProduit = () => {
             </thead>
 
             <tbody>
-              {paginatedProduits.map((p,index) => (
+              {paginatedProduits.map((p, index) => (
                 <tr key={p.id}>
                   <td className="border border-base-300">
                     {startIndex + index + 1}

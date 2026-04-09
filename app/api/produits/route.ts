@@ -3,106 +3,91 @@ import { ProduitSchema } from "@/app/config/db/schema";
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
+function apiResponse(
+  success: boolean,
+  message: string,
+  data?: any,
+  status = 200,
+) {
+  return Response.json({ success, message, data }, { status });
+}
+
 export const POST = async (req: Request) => {
   try {
     const body = await req.json();
     const { nom, image } = body;
+
     if (!nom) {
-      return new Response(JSON.stringify({ message: "Le nom est requis" }), {
-        status: 400,
-      });
+      return apiResponse(false, "Le nom est requis", null, 400);
+    }
+
+    // 🔥 check doublon
+    const existing = await drizzleDb
+      .select()
+      .from(ProduitSchema)
+      .where(eq(ProduitSchema.nom, nom));
+
+    if (existing.length > 0) {
+      return apiResponse(false, "Produit déjà existant", null, 409);
     }
 
     const newProduit = await drizzleDb
       .insert(ProduitSchema)
-      .values({ id: uuidv4(), nom, image })
+      .values({
+        id: uuidv4(),
+        nom,
+        image,
+      })
       .returning();
 
-    const reponse = {
-      message: "Produit enrégistré avec succès",
-      data: newProduit,
-    };
-    return new Response(JSON.stringify(reponse), { status: 201 });
+    return apiResponse(
+      true,
+      "Produit enregistré avec succès",
+      newProduit[0],
+      201,
+    );
   } catch (error) {
     console.error(error);
-    return Response.json(
-      { message: "Erreur lors de l'enrégistrement du produit" },
-      { status: 500 },
-    );
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };
 
 export const GET = async () => {
   try {
-    const produit = await drizzleDb.select().from(ProduitSchema);
+    const produits = await drizzleDb.select().from(ProduitSchema);
 
-    return new Response(
-      JSON.stringify({
-        message: "Liste des produit récupérée avec succès",
-        data: produit,
-      }),
-      { status: 200 },
-    );
-  } catch (error) {
-    
-  }
-};
-
-export const PUT = async (req: Request) => {
-  try {
-    const body = await req.json();
-    const { id, nom, image } = body;
-    if (!id)
-      return new Response(JSON.stringify({ message: "ID manquant" }), {
-        status: 400,
-      });
-
-    await drizzleDb
-      .update(ProduitSchema)
-      .set({ id: uuidv4(), nom, image })
-      .where(eq(ProduitSchema.id, id));
-    return new Response(
-      JSON.stringify({ message: "Produit modifié avec succès" }),
-      { status: 200 },
+    return apiResponse(
+      true,
+      "Liste des produits récupérée avec succès",
+      produits,
+      200,
     );
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ message: "Erreur dans la modification du produit" }),
-      {
-        status: 500,
-      },
-    );
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };
 
 export const DELETE = async (req: Request) => {
   try {
-    const body = await req.json();
-    const { id } = body;
+    const { id } = await req.json();
 
     if (!id) {
-      return new Response(
-        JSON.stringify({ message: "ID du produit manquant" }),
-        { status: 400 },
-      );
+      return apiResponse(false, "ID du produit manquant", null, 400);
     }
 
-    await drizzleDb
-    .delete(ProduitSchema)
-    .where(eq(ProduitSchema.id, id))
+    const deleted = await drizzleDb
+      .delete(ProduitSchema)
+      .where(eq(ProduitSchema.id, id))
+      .returning();
 
-    return new Response(
-      JSON.stringify({ message: "Produit supprimé avec succès" }),
-      { status: 200 },
-    );
+    if (deleted.length === 0) {
+      return apiResponse(false, "Produit introuvable", null, 404);
+    }
 
-
+    return apiResponse(true, "Produit supprimé avec succès", null, 200);
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ message: "Erreur serveur lors de la suppression" }),
-      { status: 500 },
-    );
+    return apiResponse(false, "Erreur serveur", null, 500);
   }
 };
