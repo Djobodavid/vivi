@@ -8,6 +8,7 @@ type Props = {
   telephone: string;
   motDePasse: string;
   confirme: string;
+  error?: string;
   loading: boolean;
   onClose: () => void;
   onChangeName: (value: string) => void;
@@ -31,6 +32,7 @@ const UtilisateurModal = ({
   telephone,
   motDePasse,
   confirme,
+  error,
   onClose,
   onChangeName,
   onChangePrenoms,
@@ -43,12 +45,14 @@ const UtilisateurModal = ({
   onReset,
   editMode,
 }: Props) => {
+  const passwordsMatch = motDePasse === confirme;
+
   return (
     <dialog id="user_modal" className="modal">
       <div className="modal-box">
-        {/* Formulaire principal */}
         <form onSubmit={onSubmit}>
-          {/* Bouton pour fermer le modal */}
+          
+          {/* Bouton fermer */}
           <button
             type="button"
             className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -61,6 +65,11 @@ const UtilisateurModal = ({
             {editMode ? "Modifier l'utilisateur" : "Nouvel utilisateur"}
           </h3>
 
+          {/* Message erreur */}
+          {error && (
+            <p className="text-red-500 mb-2">{error}</p>
+          )}
+
           <input
             type="text"
             placeholder="Nom"
@@ -69,6 +78,7 @@ const UtilisateurModal = ({
             className="input input-bordered w-full mb-4"
             required
           />
+
           <input
             type="text"
             placeholder="Prénoms"
@@ -77,6 +87,7 @@ const UtilisateurModal = ({
             className="input input-bordered w-full mb-4"
             required
           />
+
           <input
             type="text"
             placeholder="Téléphone"
@@ -106,32 +117,43 @@ const UtilisateurModal = ({
             className="input input-bordered w-full mb-4"
             required
           />
+
           <input
             type="password"
             placeholder="Mot de passe"
             value={motDePasse}
             onChange={(e) => onChangePassword(e.target.value)}
-            className="input input-bordered w-full mb-4"
+            className="input input-bordered w-full mb-2"
             required
           />
+
           <input
             type="password"
             placeholder="Confirmer mot de passe"
             value={confirme}
             onChange={(e) => onChangeConfirme(e.target.value)}
-            className="input input-bordered w-full mb-4"
+            className={`input input-bordered w-full mb-2 ${
+              confirme && !passwordsMatch ? "border-red-500" : ""
+            }`}
             required
           />
 
-          {/* Boutons action */}
-          <div className="flex justify-between">
+          {/* Message si non identique */}
+          {confirme && !passwordsMatch && (
+            <p className="text-red-500 text-sm mb-2">
+              Les mots de passe ne correspondent pas
+            </p>
+          )}
+
+          {/* Boutons */}
+          <div className="flex justify-between mt-4">
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={loading}
+              disabled={loading || !passwordsMatch}
             >
               {loading
-                ? "Création..."
+                ? "Chargement..."
                 : editMode
                 ? "Modifier"
                 : "Créer"}
