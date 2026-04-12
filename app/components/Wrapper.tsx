@@ -1,3 +1,4 @@
+"use client"
 import React from 'react'
 import { ToastContainer } from 'react-toastify';
 import Navbar from './Navbar';
@@ -12,7 +13,7 @@ const Wrapper = ({ children }: wrapperProps) => {
 
   return (
     <div>
-         <Navbar/> 
+        
         <ToastContainer
             position="top-right"
             autoClose={5000}

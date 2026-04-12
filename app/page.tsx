@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CustomModal from "./components/Modal";
 import Wrapper from "./components/Wrapper";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useSession, signIn, SignInResponse } from "next-auth/react";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -21,44 +22,43 @@ export default function Home() {
     (document.getElementById("custom_modal") as HTMLDialogElement)?.close();
   };
 
-const createConnexion = async () => {
-  try {
-    const res = await axios.post("/api/auth/login", {
-      email: email,
-      motDePasse: password,
-    });
+  const { data,status,update } = useSession();
 
-    toast.success(res.data.message); // 🔥 message backend
-    closeModal();
+  const createConnexion = async () => {
+    try {
+      const res: SignInResponse = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-  } catch (error: any) {
-    console.error(error);
+      if (res?.ok) {
+        
+        toast.success("succès");
+        closeModal();
+      } else {
+        toast.error(res?.error||"");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Erreur lors de la connexion");
+    }
+  };
 
-    const message =
-      error.response?.data?.message || "Erreur lors de la connexion";
-
-    toast.error(message); // 🔥 message dynamique
-  }
-};
+  useEffect(() => {
+    console.log(status,"session",data?.user,data?.expires)
+    if (status === "unauthenticated") {
+      openModal();
+    }
+  }, [status]);
 
   return (
     <Wrapper>
-      <div className="flex flex-col justify-center items-center ">
-        <h3 className="mt-10 font-bold">
-          Cliquez sur le bouton se connecter pour vous connecter
-        </h3>
+      <div className="flex flex-col justify-center items-center">
         <div className="w-full mt-30 flex items-center justify-center">
-          <button
-            className="btn btn-primary flex justify-center items-center"
-            onClick={openModal}
-          >
-            Se connecter
-          </button>
-
           <CustomModal
             title="Connexion"
             loading={loading}
-            onClose={closeModal}
             onSubmit={createConnexion}
             submitLabel="Se connecter"
             fields={[

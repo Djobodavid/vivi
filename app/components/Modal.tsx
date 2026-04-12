@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-
 type Option = {
   label: string;
   value: string;
@@ -21,7 +19,7 @@ type Props = {
   title: string;
   fields: Field[];
   loading: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   onSubmit: () => void;
   onReset?: () => void;
   editMode?: boolean;

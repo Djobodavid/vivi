@@ -1,10 +1,10 @@
-import NextAuth from "next-auth";
+import NextAuth, { Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { drizzleDb } from "@/app/config/db"; // ton instance Drizzle
 import { UserSchema } from "@/app/config/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import ''
+
 
 const authOptions = {
   providers: [
@@ -17,7 +17,7 @@ const authOptions = {
       async authorize(credentials) {
         try{
         if (!credentials?.email || !credentials?.password) return null;
-
+          console.log("credentials",credentials)
         const user = await drizzleDb.query.UserSchema.findFirst({
           where: eq(UserSchema.email, credentials.email as any),
         });
@@ -35,12 +35,16 @@ const authOptions = {
         const role = await drizzleDb.query.roles.findFirst({
           where: eq(roles.id, user.roleId!),
         }); */
-         
-        return {
-          id: user.id,
-          email: user.email,
-          role: UserSchema.role || "etudiant",
+
+        const userInfo= {
+          id: user?.id,
+          email: user?.email,
+          role: user?.role ,
+          nom:user?.nom,
+          prenom:user?.prenom
         };
+      //   console.log("user connected",userInfo)
+        return userInfo
       }catch(error:any){
         console.log("Erreur lors de l'authentification:", error.message);
         return null
@@ -49,25 +53,32 @@ const authOptions = {
     }),
   ],
 
-  callbacks: {
+   callbacks: {
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
-        token.role = user.role;
+        token.user = user;
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }: { session: Session; token: any }) {
       if (token) {
-        session.user.role = token.role;
+        session.user = token.user;
       }
       return session;
     },
-  },
-  pages: {
+  }, 
+  /* pages: {
     signIn: "/login",
-  },
+  }, */
   secret: process.env.NEXTAUTH_SECRET,
-  
+
 };
 
-export const {handlers,auth,signIn,signOut} = NextAuth(authOptions);
+export const {handlers,auth,signIn,signOut} = NextAuth({
+  ...authOptions,
+session:{
+  strategy:"jwt",
+  maxAge:60,
+  //updateAge:
+}
+});
