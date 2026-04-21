@@ -22,7 +22,7 @@ export default function Home() {
     (document.getElementById("custom_modal") as HTMLDialogElement)?.close();
   };
 
-  const { data,status,update } = useSession();
+  const { data, status, update } = useSession();
 
   const createConnexion = async () => {
     try {
@@ -31,13 +31,16 @@ export default function Home() {
         password,
         redirect: false,
       });
-
-      if (res?.ok) {
-        
+      console.log("result auth", res);
+      if (!res?.error) {
         toast.success("succès");
         closeModal();
       } else {
-        toast.error(res?.error||"");
+        toast.error(
+          res?.error && res?.error === "CredentialsSignin"
+            ? "Le mot de passe ou l'email est invalide"
+            : res?.error,
+        );
       }
     } catch (error: any) {
       console.error(error);
@@ -45,8 +48,10 @@ export default function Home() {
     }
   };
 
+  
+
   useEffect(() => {
-    console.log(status,"session",data?.user,data?.expires)
+    console.log(status, "session", data?.user, data?.expires);
     if (status === "unauthenticated") {
       openModal();
     }

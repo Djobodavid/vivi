@@ -86,19 +86,23 @@ export const StockSchema = pgTable("stockage_produit", {
 
   date_expiration: timestamp("date_expiration").notNull(),
 
-  produitId: uuid("produit_id")
+  produitId: uuid("produitId")
     .references(() => ProduitSchema.id)
     .notNull(),
 
-  fournisseurId: uuid("fournisseur_id")
+  fournisseurId: uuid("fournisseurId")
     .references(() => FournisseurSchema.id)
     .notNull(),
 
-  utilisateurId: uuid("utilisateur_id")
+  utilisateurId: uuid("utilisateurId")
     .references(() => UserSchema.id)
     .notNull(),
 
-  uniteId: uuid("unite_id")
+  uniteId: uuid("uniteId")
     .references(() => UniteSchema.id)
+    .notNull(),
+
+  categoryId: uuid("categoryId")
+    .references(() => CategorySchema.id)
     .notNull(),
 });

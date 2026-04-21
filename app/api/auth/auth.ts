@@ -29,12 +29,15 @@ const authOptions = {
         if (!user) return null;
 
         const isValid = await bcrypt.compare(credentials.password as any, user.motDePasse);
+        console.log(credentials.password,"isValid",isValid)
         if (!isValid) return null;
 
         /* // Récupérer le rôle
         const role = await drizzleDb.query.roles.findFirst({
           where: eq(roles.id, user.roleId!),
         }); */
+
+        
 
         const userInfo= {
           id: user?.id,
@@ -78,7 +81,7 @@ export const {handlers,auth,signIn,signOut} = NextAuth({
   ...authOptions,
 session:{
   strategy:"jwt",
-  maxAge:60,
+  maxAge:600,
   //updateAge:
 }
 });

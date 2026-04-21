@@ -19,10 +19,10 @@ type Props = {
   produitId: string;
   fournisseurId: string;
   uniteId: string;
-
+  categoryId: string;
   produits: Option[];
   fournisseurs: Option[];
-
+  category: Option[];
   unites: Option[];
 
   loading: boolean;
@@ -38,7 +38,7 @@ type Props = {
   onChangeAutreFrais: (v: string) => void;
   onChangeObservation: (v: string) => void;
   onChangeDateExpiration: (v: string) => void;
-
+  onChangeCategory: (v: string) => void;
   onChangeProduit: (v: string) => void;
   onChangeFournisseur: (v: string) => void;
   onChangeUnite: (v: string) => void;
@@ -54,6 +54,8 @@ const StockModal = ({
   dateExpiration,
   produitId,
   fournisseurId,
+  categoryId,
+  category,
   uniteId,
   produits,
   fournisseurs,
@@ -67,6 +69,7 @@ const StockModal = ({
   onChangeQuantiteMinStock,
   onChangePrixUnitaire,
   onChangeAutreFrais,
+  onChangeCategory,
   onChangeObservation,
   onChangeDateExpiration,
   onChangeProduit,
@@ -171,6 +174,20 @@ const StockModal = ({
             {produits.map((p, i) => (
               <option key={i} value={p.value}>
                 {p.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={categoryId}
+            onChange={(e) => onChangeCategory(e.target.value)}
+            className="select select-bordered w-full"
+            required
+          >
+            <option value="">Category</option>
+            {category.map((c, i) => (
+              <option key={i} value={c.value}>
+                {c.label}
               </option>
             ))}
           </select>
