@@ -7,8 +7,11 @@ import UtilisateurModal from "../components/UseuModal";
 import { toast } from "react-toastify";
 import { Group, Pencil, Trash, User } from "lucide-react";
 import EmptyState from "../components/EmptyState";
+import { redirect } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const page = () => {
+  const { status } = useSession(); // ✅ AJOUT ICI
   const [name, setName] = useState("");
   const [telephone, setTelephone] = useState("");
   const [role, setRole] = useState("");
@@ -36,8 +39,14 @@ const page = () => {
     }
   };
   useEffect(() => {
-    loadUsers();
-  }, []);
+    if (status === "authenticated") {
+      loadUsers(); // charge les clients au montage
+    }
+    
+    if (status === "unauthenticated") {
+      redirect("/");
+    }
+  }, [status]);
 
   const onpenCreateModal = () => {
     setEditMode(false);

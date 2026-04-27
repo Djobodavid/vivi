@@ -79,6 +79,8 @@ export const StockSchema = pgTable("stockage_produit", {
   quantite_min_stock: integer("quantite_min_stock").notNull(),
 
   prix_unitaire_achat: numeric("prix_unitaire_achat").notNull(),
+  
+  prix_unitaire_vente: numeric("prix_unitaire_vente").notNull(),
 
   autre_frais: numeric("autre_frais"),
 
@@ -105,4 +107,53 @@ export const StockSchema = pgTable("stockage_produit", {
   categoryId: uuid("categoryId")
     .references(() => CategorySchema.id)
     .notNull(),
+});
+
+export const VenteSchema = pgTable("vente", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  date_vente: timestamp("date_vente").defaultNow(),
+
+  total: numeric("total").notNull(),
+
+  autre_frais: numeric("autre_frais"),
+
+  observation: varchar("observation"),
+
+  mode_paiement: varchar("mode_paiement").default("cash"),
+
+  montant_recu: numeric("montant_recu"),
+
+  monnaie_rendue: numeric("monnaie_rendue"),
+
+  clientId: uuid("clientId").references(() => ClientSchema.id),
+
+  utilisateurId: uuid("utilisateurId")
+    .references(() => UserSchema.id)
+    .notNull(),
+});
+
+export const VenteItemSchema = pgTable("vente_item", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  venteId: uuid("venteId")
+    .references(() => VenteSchema.id)
+    .notNull(),
+
+  produitId: uuid("produitId")
+    .references(() => ProduitSchema.id)
+    .notNull(),
+
+  stockId: uuid("stockId") // ✅ AJOUT ICI
+    .references(() => StockSchema.id)
+    .notNull(),
+
+  uniteId: uuid("uniteId")
+    .references(() => UniteSchema.id),
+
+  quantite: integer("quantite").notNull(),
+
+  prix_unitaire: numeric("prix_unitaire").notNull(),
+
+  total: numeric("total").notNull(),
 });

@@ -12,6 +12,7 @@ type Props = {
   quantiteStock: string;
   quantiteMinStock: string;
   prixUnitaire: string;
+  prixVenteUnitaire: string;
   autreFrais: string;
   observation: string;
   dateExpiration: string;
@@ -35,6 +36,7 @@ type Props = {
   onChangeQuantiteStock: (v: string) => void;
   onChangeQuantiteMinStock: (v: string) => void;
   onChangePrixUnitaire: (v: string) => void;
+  onChangePrixVenteUnitaire: (v: string) => void;
   onChangeAutreFrais: (v: string) => void;
   onChangeObservation: (v: string) => void;
   onChangeDateExpiration: (v: string) => void;
@@ -49,6 +51,7 @@ const StockModal = ({
   quantiteStock,
   quantiteMinStock,
   prixUnitaire,
+  prixVenteUnitaire,
   autreFrais,
   observation,
   dateExpiration,
@@ -68,6 +71,7 @@ const StockModal = ({
   onChangeQuantiteStock,
   onChangeQuantiteMinStock,
   onChangePrixUnitaire,
+  onChangePrixVenteUnitaire,
   onChangeAutreFrais,
   onChangeCategory,
   onChangeObservation,
@@ -150,6 +154,15 @@ const StockModal = ({
             placeholder="Prix unitaire"
             value={prixUnitaire}
             onChange={(e) => onChangePrixUnitaire(e.target.value)}
+            className="input input-bordered w-full"
+            required
+          />
+
+          <input
+            type="number"
+            placeholder="Prix de vente unitaire"
+            value={prixVenteUnitaire}
+            onChange={(e) => onChangePrixVenteUnitaire(e.target.value)}
             className="input input-bordered w-full"
             required
           />

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  History,
   Home,
   Icon,
   Layers,
@@ -12,6 +13,7 @@ import {
   ShoppingCart,
   Tag,
   User,
+  Wallet,
   Warehouse,
   Wifi,
   X,
@@ -55,11 +57,21 @@ const Navbar = () => {
       icon: Home,
       roles: ["admin", "agent", "gestionnaire"],
     },
+
+
     {
-      href: "/vente",
-      label: "Ventes",
-      icon: ShoppingCart,
-      roles: ["admin", "agent"],
+      label: "Caisse",
+      roles: ["admin","agent"],
+      icon: Wallet,
+      children: [
+        { href: "/vente", label: "Vente", icon: Layers, roles: ["admin","agent"] },
+        {
+          href: "/Historiques",
+          label: "Historique",
+          icon: History,
+          roles: ["admin","agent"],
+        },
+      ],
     },
     {
       href: "/produit",
@@ -79,7 +91,7 @@ const Navbar = () => {
       icon: LayoutDashboard,
       roles: ["admin"],
     },
-    { href: "/clients", label: "Clients", icon: User, roles: ["admin"] },
+    { href: "/clients", label: "Clients", icon: User, roles: ["admin", "agent"] },
     {
       href: "/fournisseur",
       label: "Fournisseurs",
@@ -109,7 +121,10 @@ const Navbar = () => {
         },
       ],
     },
+    
   ];
+
+  
 
   const renderLinks = (baseClass: string) => (
     <>
@@ -194,7 +209,7 @@ const Navbar = () => {
           <div className="p-2">
             <FaBriefcaseMedical className="w-6 h-6 text-primary" />
           </div>
-          <span className="font-bold text-xl hidden sm:inline">DermaStok</span>
+          <span className="font-bold text-xl hidden sm:inline">DermaStock</span>
         </div>
 
         <button

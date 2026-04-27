@@ -7,8 +7,11 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import EmptyState from "../components/EmptyState";
 import { Group, Pencil, Trash } from "lucide-react";
+import { redirect } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const Page = () => {
+  const { status } = useSession(); // ✅ AJOUT ICI
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
   const [addresse, setAddresse] = useState("");
@@ -36,9 +39,15 @@ const loadFournisseurs = async () => {
   }
 };
 
-useEffect(() => {
-  loadFournisseurs();
-}, []);
+  useEffect(() => {
+    if (status === "authenticated") {
+      loadFournisseurs(); // charge les clients au montage
+    }
+    
+    if (status === "unauthenticated") {
+      redirect("/");
+    }
+  }, [status]);
 
   // 🔹 OPEN CREATE
   const openModal = () => {

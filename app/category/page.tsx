@@ -7,8 +7,11 @@ import axios from "axios";
 import { Divide, Group, Pencil, Trash } from "lucide-react";
 import EmptyState from "../components/EmptyState";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 const page = () => {
+  const { status } = useSession(); // ✅ AJOUT ICI
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,9 +39,15 @@ const page = () => {
     }
   };
 
-  useEffect(() => {
-    loadCategory();
-  }, []);
+    useEffect(() => {
+      if (status === "authenticated") {
+        loadCategory(); // charge les clients au montage
+      }
+      
+      if (status === "unauthenticated") {
+        redirect("/");
+      }
+    }, [status]);
 
   const onpenCreateModal = () => {
     setEditMode(false);

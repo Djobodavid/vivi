@@ -7,8 +7,11 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import EmptyState from "../components/EmptyState";
 import { Group, Pencil, Trash } from "lucide-react";
+import { redirect, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const page = () => {
+  const { status } = useSession(); // ✅ AJOUT ICI
   const [name, setName] = useState("");
   const [telephone, setTelephone] = useState("");
   const [adresse, setAdresse] = useState("");
@@ -16,6 +19,8 @@ const page = () => {
   const [editMode, setEditMode] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+const searchParam=useSearchParams()
+const open_modal=searchParam.get("action")
 
   const loadClient = async () => {
     try {
@@ -36,8 +41,16 @@ const page = () => {
   };
 
   useEffect(() => {
-    loadClient(); // charge les clients au montage
-  }, []);
+    if (status === "authenticated") {
+      loadClient(); // charge les clients au montage
+    }
+    if(open_modal&&open_modal==="open"){
+      onpenCreateModal()
+    }
+    if (status === "unauthenticated") {
+      redirect("/");
+    }
+  }, [status]);
 
   const onpenCreateModal = () => {
     setEditMode(false);

@@ -29,6 +29,7 @@ export const POST = async (req: Request) => {
       quantite_stock,
       quantite_min_stock,
       prix_unitaire_achat,
+      prix_unitaire_vente,
       autre_frais,
       observation,
       date_expiration,
@@ -43,6 +44,7 @@ export const POST = async (req: Request) => {
       !quantite_stock ||
       !quantite_min_stock ||
       !prix_unitaire_achat ||
+      !prix_unitaire_vente||
       !date_expiration ||
       !produitId ||
       !fournisseurId ||
@@ -79,6 +81,7 @@ export const POST = async (req: Request) => {
         quantite_stock: Number(quantite_stock),
         quantite_min_stock: Number(quantite_min_stock),
         prix_unitaire_achat: prix_unitaire_achat.toString(),
+        prix_unitaire_vente: prix_unitaire_vente.toString(),
         autre_frais: autre_frais ? autre_frais.toString() : null,
         observation,
         date_expiration: new Date(date_expiration),
@@ -106,6 +109,7 @@ export const GET = async () => {
         quantite_stock: StockSchema.quantite_stock,
         quantite_min_stock: StockSchema.quantite_min_stock,
         prix_unitaire_achat: StockSchema.prix_unitaire_achat,
+        prix_unitaire_vente: StockSchema.prix_unitaire_vente,
         date_expiration: StockSchema.date_expiration,
 
         produit: {

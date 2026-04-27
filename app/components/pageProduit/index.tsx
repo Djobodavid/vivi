@@ -9,10 +9,12 @@ import EmptyState from "../EmptyState";
 import { Group, Pencil, Trash } from "lucide-react";
 import { fileToBase64 } from "@/utils";
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const PageProduit = () => {
   const [nom, setNom] = useState("");
-
+  const { status } = useSession(); // ✅ AJOUT ICI
   const [image, setImage] = useState<string | null>();
   const [preview, setPreview] = useState<string | null>(null);
   const [oldImage, setOldImage] = useState<string | null>(null);
@@ -52,8 +54,14 @@ const PageProduit = () => {
   };
 
   useEffect(() => {
-    loadProduits();
-  }, []);
+    if (status === "authenticated") {
+      loadProduits(); // charge les clients au montage
+    }
+    
+    if (status === "unauthenticated") {
+      redirect("/");
+    }
+  }, [status]);
 
   // 🔹 IMAGE
   const handleImage = async (file: File) => {

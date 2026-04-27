@@ -7,8 +7,11 @@ import EmptyState from "../components/EmptyState";
 import { Group } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { redirect } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const Page = () => {
+   const { status } = useSession(); // ✅ AJOUT ICI
   const [dateStock, setDateStock] = useState("");
   const [dateExpiration, setDateExpiration] = useState("");
 
@@ -16,6 +19,7 @@ const Page = () => {
   const [quantiteMinStock, setQuantiteMinStock] = useState("");
 
   const [prixUnitaire, setPrixUnitaire] = useState("");
+  const [prixVenteUnitaire, setPrixVenteUnitaire] = useState("");
   const [autreFrais, setAutreFrais] = useState("");
   const [stocks, setStocks] = useState<any[]>([]);
   const [observation, setObservation] = useState("");
@@ -138,13 +142,21 @@ const Page = () => {
     }
   };
 
-  useEffect(() => {
-    loadProduits();
+    useEffect(() => {
+      if (status === "authenticated") {
+            loadProduits();
     loadFournisseurs();
     loadUnites();
     loadStock();
     loadCtegory();
-  }, []);
+      }
+      
+      if (status === "unauthenticated") {
+        redirect("/");
+      }
+    }, [status]);
+
+
 
   const loadStock = async () => {
     try {
@@ -172,6 +184,7 @@ const Page = () => {
     setQuantiteStock("");
     setQuantiteMinStock("");
     setPrixUnitaire("");
+    setPrixVenteUnitaire("");
     setAutreFrais("");
     setObservation("");
     setProduitId("");
@@ -195,6 +208,7 @@ const Page = () => {
       !quantiteStock ||
       !quantiteMinStock ||
       !prixUnitaire ||
+      !prixVenteUnitaire ||
       !produitId ||
       !fournisseurId ||
       !categoryId ||
@@ -213,6 +227,7 @@ const Page = () => {
         quantite_stock: Number(quantiteStock),
         quantite_min_stock: Number(quantiteMinStock),
         prix_unitaire_achat: Number(prixUnitaire),
+        prix_unitaire_vente: Number(prixVenteUnitaire),
         autre_frais: autreFrais ? Number(autreFrais) : null,
         observation,
         produitId,
@@ -252,7 +267,8 @@ const Page = () => {
                 <th className="border border-base-300 w-1">#</th>
                 <th className="border border-base-300">Produit</th>
                 <th className="border border-base-300">Quantité</th>
-                <th className="border border-base-300">Prix</th>
+                <th className="border border-base-300">Prix d'achat</th>
+                <th className="border border-base-300">Prix de vente</th>
                 <th className="border border-base-300">Fournisseur</th>
                 <th className="border border-base-300">expiration</th>
                 <th className="border border-base-300">statut</th>
@@ -299,6 +315,10 @@ const Page = () => {
                     {s.prix_unitaire_achat}
                   </td>
 
+                  <td className="border border-base-300">
+                    {s.prix_unitaire_vente}
+                  </td>
+
                   {/* FOURNISSEUR */}
                   <td className="border border-base-300">
                     {s.fournisseur?.nom || "N/A"}
@@ -336,6 +356,7 @@ const Page = () => {
         quantiteStock={quantiteStock}
         quantiteMinStock={quantiteMinStock}
         prixUnitaire={prixUnitaire}
+        prixVenteUnitaire={prixVenteUnitaire}
         autreFrais={autreFrais}
         observation={observation}
         produitId={produitId}
@@ -355,6 +376,7 @@ const Page = () => {
         onChangeQuantiteStock={setQuantiteStock}
         onChangeQuantiteMinStock={setQuantiteMinStock}
         onChangePrixUnitaire={setPrixUnitaire}
+        onChangePrixVenteUnitaire={setPrixVenteUnitaire}
         onChangeAutreFrais={setAutreFrais}
         onChangeObservation={setObservation}
         onChangeProduit={setProduitId}

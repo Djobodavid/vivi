@@ -33,7 +33,7 @@ export default function Home() {
       });
       console.log("result auth", res);
       if (!res?.error) {
-        toast.success("succès");
+        toast.success("Connection réussie");
         closeModal();
       } else {
         toast.error(
