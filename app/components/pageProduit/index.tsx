@@ -23,17 +23,21 @@ const PageProduit = () => {
   const [editMode, setEditMode] = useState(false);
   const [produits, setProduits] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  const filteredProduit = produits.filter((c) =>
+    c.nom.toLowerCase().includes(search.toLowerCase()),
+  );
+
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProduits = produits.slice(
+  const paginatedProduits = filteredProduit.slice(
     startIndex,
     startIndex + itemsPerPage,
   );
 
-  const totalPages = Math.ceil(produits.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredProduit.length / itemsPerPage);
 
   const loadProduits = async () => {
     try {
@@ -57,7 +61,7 @@ const PageProduit = () => {
     if (status === "authenticated") {
       loadProduits(); // charge les clients au montage
     }
-    
+
     if (status === "unauthenticated") {
       redirect("/");
     }
@@ -194,13 +198,20 @@ const PageProduit = () => {
 
   return (
     <Wrapper>
-      <div className="mb-4">
+      <div className="flex gap-2 mb-4">
         <button className="btn btn-primary" onClick={openModal}>
           Ajouter un produit
         </button>
+        <input
+          type="text"
+          placeholder="Rechercher un produit..."
+          className="input input-bordered w-full max-w-sm mb-4"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      {produits.length > 0 ? (
+      {filteredProduit.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="table table-zebra border border-base-300">
             <thead className="bg-base-200">

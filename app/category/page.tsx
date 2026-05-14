@@ -18,6 +18,20 @@ const page = () => {
   const [editMode, setEditMode] = useState(false);
   const [category, setCategory] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const filteredCategory = category.filter((c) =>
+    c.nom.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const totalPages = Math.ceil(filteredCategory.length / itemsPerPage);
+
+  const paginatedCategory = filteredCategory.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   const loadCategory = async () => {
     try {
@@ -39,15 +53,15 @@ const page = () => {
     }
   };
 
-    useEffect(() => {
-      if (status === "authenticated") {
-        loadCategory(); // charge les clients au montage
-      }
-      
-      if (status === "unauthenticated") {
-        redirect("/");
-      }
-    }, [status]);
+  useEffect(() => {
+    if (status === "authenticated") {
+      loadCategory(); // charge les clients au montage
+    }
+
+    if (status === "unauthenticated") {
+      redirect("/");
+    }
+  }, [status]);
 
   const onpenCreateModal = () => {
     setEditMode(false);
@@ -159,12 +173,19 @@ const page = () => {
   return (
     <Wrapper>
       <div>
-        <div className="mb-4">
+        <div className="flex gap-2 mb-4">
           <button className="btn btn-primary" onClick={onpenCreateModal}>
             Ajouter une catégorie
           </button>
+          <input
+            type="text"
+            placeholder="Rechercher une catégorie..."
+            className="input input-bordered w-full max-w-sm mb-4"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        {category.length > 0 ? (
+        {filteredCategory.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="table table-zebra border border-base-300">
               <thead className="bg-base-200">
@@ -176,7 +197,7 @@ const page = () => {
               </thead>
 
               <tbody>
-                {category.map((cat) => (
+                {paginatedCategory.map((cat) => (
                   <tr key={cat.id}>
                     <td className="border border-base-300 font-semibold">
                       {cat.nom}
@@ -209,6 +230,27 @@ const page = () => {
                 ))}
               </tbody>
             </table>
+            <div className="flex justify-center gap-2 mt-4">
+              <button
+                className="btn btn-sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                Précédent
+              </button>
+
+              <span className="px-2">
+                Page {currentPage} / {totalPages}
+              </span>
+
+              <button
+                className="btn btn-sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                Suivant
+              </button>
+            </div>
           </div>
         ) : (
           <EmptyState

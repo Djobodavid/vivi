@@ -11,7 +11,11 @@ import { redirect } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 const Page = () => {
-   const { status } = useSession(); // ✅ AJOUT ICI
+  const { data: session, status } = useSession();
+const role = (session?.user as any)?.role;
+
+
+const isAdmin = role === "admin";
   const [dateStock, setDateStock] = useState("");
   const [dateExpiration, setDateExpiration] = useState("");
 
@@ -23,6 +27,8 @@ const Page = () => {
   const [autreFrais, setAutreFrais] = useState("");
   const [stocks, setStocks] = useState<any[]>([]);
   const [observation, setObservation] = useState("");
+  const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   const [produits, setProduits] = useState<{ label: string; value: string }[]>(
     [],
@@ -43,16 +49,63 @@ const Page = () => {
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProduit, setSelectedProduit] = useState<any>(null);
+  const [open, setOpen] = useState(false);
+  
 
-  const itemsPerPage = 5;
+  const handleView = (produit: any) => {
+    setSelectedProduit(produit);
+    setOpen(true);
+  };
+
+  const groupedStocks = Object.values(
+    stocks.reduce((acc: any, s: any) => {
+      const key = s.produit.id;
+
+      if (!acc[key]) {
+        acc[key] = {
+          produit: s.produit,
+          totalStock: 0,
+          totalRestant: 0,
+          lots: [],
+        };
+      }
+
+      acc[key].totalStock += Number(s.quantite_stock);
+      acc[key].totalRestant += Number(s.quantite_restante);
+      acc[key].lots.push(s);
+
+      return acc;
+    }, {}),
+  );
+
+  const filteredStocks = groupedStocks.filter((g: any) => {
+    const matchSearch = g.produit.nom
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchDate = dateFilter
+      ? g.lots.some(
+          (lot: any) =>
+            new Date(lot.date_stock).toISOString().split("T")[0] === dateFilter,
+        )
+      : true;
+
+    return matchSearch && matchDate;
+  });
+
+  const itemsPerPage = 6;
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProduits = produits.slice(
+  const paginatedStocks = filteredStocks.slice(
     startIndex,
     startIndex + itemsPerPage,
   );
 
-  const totalPages = Math.ceil(produits.length / itemsPerPage);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredStocks.length / itemsPerPage),
+  );
 
   const loadProduits = async () => {
     try {
@@ -142,21 +195,19 @@ const Page = () => {
     }
   };
 
-    useEffect(() => {
-      if (status === "authenticated") {
-            loadProduits();
-    loadFournisseurs();
-    loadUnites();
-    loadStock();
-    loadCtegory();
-      }
-      
-      if (status === "unauthenticated") {
-        redirect("/");
-      }
-    }, [status]);
+  useEffect(() => {
+    if (status === "authenticated") {
+      loadProduits();
+      loadFournisseurs();
+      loadUnites();
+      loadStock();
+      loadCtegory();
+    }
 
-
+    if (status === "unauthenticated") {
+      redirect("/");
+    }
+  }, [status]);
 
   const loadStock = async () => {
     try {
@@ -207,8 +258,6 @@ const Page = () => {
       !dateExpiration ||
       !quantiteStock ||
       !quantiteMinStock ||
-      !prixUnitaire ||
-      !prixVenteUnitaire ||
       !produitId ||
       !fournisseurId ||
       !categoryId ||
@@ -223,18 +272,32 @@ const Page = () => {
     try {
       const res = await axios.post("/api/stock", {
         date_stock: dateStock,
+
         date_expiration: dateExpiration,
+
         quantite_stock: Number(quantiteStock),
+
         quantite_min_stock: Number(quantiteMinStock),
-        prix_unitaire_achat: Number(prixUnitaire),
-        prix_unitaire_vente: Number(prixVenteUnitaire),
+
+        prix_unitaire_achat:
+          isAdmin && prixUnitaire ? Number(prixUnitaire) : null,
+
+        prix_unitaire_vente:
+          isAdmin && prixVenteUnitaire ? Number(prixVenteUnitaire) : null,
+
         autre_frais: autreFrais ? Number(autreFrais) : null,
+
         observation,
+
         produitId,
+
         fournisseurId,
+
         utilisateurId,
+
         uniteId,
-        categoryId
+
+        categoryId,
       });
 
       toast.success(res.data.message);
@@ -253,98 +316,163 @@ const Page = () => {
     }
   };
 
+  
+
   return (
     <Wrapper>
-      <button className="btn btn-primary mb-4" onClick={openModal}>
-        Ajouter un stock
-      </button>
+      <div className="flex gap-2 mb-4">
+        <button className="btn btn-primary mb-4" onClick={openModal}>
+          Ajouter un stock
+        </button>
+        <input
+          type="text"
+          placeholder="Rechercher stock..."
+          className="input input-bordered w-full"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-      {stocks.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="table table-zebra border border-base-300">
-            <thead className="bg-base-200">
-              <tr>
-                <th className="border border-base-300 w-1">#</th>
-                <th className="border border-base-300">Produit</th>
-                <th className="border border-base-300">Quantité</th>
-                <th className="border border-base-300">Prix d'achat</th>
-                <th className="border border-base-300">Prix de vente</th>
-                <th className="border border-base-300">Fournisseur</th>
-                <th className="border border-base-300">expiration</th>
-                <th className="border border-base-300">statut</th>
-              </tr>
-            </thead>
+        <input
+          aria-label="text"
+          type="date"
+          className="input input-bordered"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+        />
 
-            <tbody>
-              {stocks.map((s, index) => (
-                <tr key={s.id}>
-                  {/* INDEX */}
-                  <td className="border border-base-300">{index + 1}</td>
+        <button
+          onClick={() => {
+            setDateFilter("");
+            loadStock();
+          }}
+          className="btn btn-outline"
+        >
+          Reset
+        </button>
+      </div>
 
-                  <td className="border border-base-300">
-                    <div className="flex items-center gap-3">
-                      {/* IMAGE */}
-                      <div className="w-10 h-10 rounded overflow-hidden bg-base-200 ">
-                        <img
-                          src={s.produit?.image || "/no-image.png"}
-                          alt={s.produit?.nom || "produit"}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+      {filteredStocks.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {paginatedStocks.map((g: any, index: number) => (
+            <div
+              key={index}
+              className="border p-4 rounded-xl shadow flex flex-col gap-2"
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={g.produit.image || "/no-image.png"}
+                  alt={g.produit?.nom || "produit"}
+                  className="w-12 h-12 object-cover rounded"
+                />
+                <div>
+                  <p className="font-bold">{g.produit.nom}</p>
+                  <p className="font-bold">
+                    {g.lots[0]?.category?.nom || "Sans catégorie"}
+                  </p>
+                </div>
+              </div>
 
-                      {/* TEXTE (BIEN SÉPARÉ) */}
-                      <div className="flex flex-col">
-                        <span className="font-semibold">
-                          {s.produit?.nom || "N/A"}
-                        </span>
+              <p>Stock initial: {g.totalStock}</p>
+              <p>Stock restant: {g.totalRestant}</p>
+              <p>Stock vendu: {g.totalStock - g.totalRestant}</p>
 
-                        <span className="text-xs opacity-60">
-                          {s.category?.nom || ""}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
+              <button
+                onClick={() => handleView(g)}
+                className="btn btn-sm btn-primary mt-2"
+              >
+                Voir détails
+              </button>
+            </div>
+          ))}
+          {open && selectedProduit && (
+            <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+              <div className="bg-white p-4 rounded-lg w-full max-w-4xl overflow-x-auto">
+                <h2 className="font-bold mb-3">
+                  {selectedProduit.produit.nom}
+                </h2>
 
-                  {/* QUANTITÉ + UNITÉ (CE QUE TU VOULAIS 🔥) */}
-                  <td className="border border-base-300">
-                    {s.quantite_stock} {s.unite?.nom || ""}
-                  </td>
+                <table className="table table-zebra">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Achat</th>
+                      <th>Vente</th>
+                      <th>Initial</th>
+                      <th>Vendue</th>
+                      <th>Restante</th>
+                      <th>Fournisseur</th>
+                      <th>Utilisateur</th>
+                      <th>Expiration</th>
+                      <th>Statut</th>
+                    </tr>
+                  </thead>
 
-                  {/* PRIX */}
-                  <td className="border border-base-300">
-                    {s.prix_unitaire_achat}
-                  </td>
+                  <tbody>
+                    {selectedProduit.lots.map((s: any) => {
+                      const vendue =
+                        Number(s.quantite_stock) - Number(s.quantite_restante);
 
-                  <td className="border border-base-300">
-                    {s.prix_unitaire_vente}
-                  </td>
+                      return (
+                        <tr key={s.id}>
+                          <td>{new Date(s.date_stock).toLocaleDateString()}</td>
+                          <td>{s.prix_unitaire_achat}</td>
+                          <td>{s.prix_unitaire_vente}</td>
+                          <td>{s.quantite_stock}</td>
+                          <td>{vendue}</td>
+                          <td>{s.quantite_restante}</td>
+                          <td>{s.fournisseur?.nom}</td>
+                          <td>{s.utilisateur?.nom}</td>
+                          <td>
+                            {new Date(s.date_expiration).toLocaleDateString()}
+                          </td>
 
-                  {/* FOURNISSEUR */}
-                  <td className="border border-base-300">
-                    {s.fournisseur?.nom || "N/A"}
-                  </td>
+                          <td>
+                            {new Date(s.date_expiration) < new Date() ? (
+                              <span className="badge badge-error">Expiré</span>
+                            ) : s.quantite_restante <= s.quantite_min_stock ? (
+                              <span className="badge badge-warning">
+                                Stock faible
+                              </span>
+                            ) : (
+                              <span className="badge badge-success">OK</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
 
-                  {/* EXPIRATION */}
-                  <td className="border border-base-300">
-                    {new Date(s.date_expiration).toLocaleDateString()}
-                  </td>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="btn btn-error mt-3"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              className="btn btn-sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              Précédent
+            </button>
 
-                  {/* STATUT */}
-                  <td className="border border-base-300">
-                    {new Date(s.date_expiration) < new Date() ? (
-                      <span className="badge badge-error">Expiré</span>
-                    ) : s.quantite_stock <= s.quantite_min_stock ? (
-                      <span className="badge badge-warning text-[10px] sm:text-xs whitespace-nowrap">
-                        Stock faible
-                      </span>
-                    ) : (
-                      <span className="badge badge-success">OK</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <span className="px-2">
+              Page {currentPage} / {totalPages}
+            </span>
+
+            <button
+              className="btn btn-sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Suivant
+            </button>
+          </div>
         </div>
       ) : (
         <EmptyState iconComponent={Group} message="Aucun stock disponible" />
@@ -383,6 +511,7 @@ const Page = () => {
         onChangeFournisseur={setFournisseurId}
         onChangeUnite={setUniteId}
         onChangeCategory={setCategoryId}
+        isAdmin={isAdmin}
       />
     </Wrapper>
   );

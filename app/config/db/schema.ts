@@ -75,12 +75,16 @@ export const StockSchema = pgTable("stockage_produit", {
   date_stock: timestamp("date_stock").notNull(),
 
   quantite_stock: integer("quantite_stock").notNull(),
-  
+
+  quantite_restante: integer("quantite_restante").notNull(),
+
   quantite_min_stock: integer("quantite_min_stock").notNull(),
 
-  prix_unitaire_achat: numeric("prix_unitaire_achat").notNull(),
-  
-  prix_unitaire_vente: numeric("prix_unitaire_vente").notNull(),
+  prix_unitaire_achat: numeric("prix_unitaire_achat"),
+
+  prix_unitaire_vente: numeric("prix_unitaire_vente"),
+
+  statut: varchar("statut").default("en_attente").notNull(),
 
   autre_frais: numeric("autre_frais"),
 
@@ -148,8 +152,7 @@ export const VenteItemSchema = pgTable("vente_item", {
     .references(() => StockSchema.id)
     .notNull(),
 
-  uniteId: uuid("uniteId")
-    .references(() => UniteSchema.id),
+  uniteId: uuid("uniteId").references(() => UniteSchema.id),
 
   quantite: integer("quantite").notNull(),
 

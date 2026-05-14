@@ -11,12 +11,26 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 
 const page = () => {
-   const { status } = useSession(); // ✅ AJOUT ICI
+  const { status } = useSession(); // ✅ AJOUT ICI
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [unite, setUnite] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const filteredUnite = unite.filter((u) =>
+    u.nom.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const totalPages = Math.ceil(filteredUnite.length / itemsPerPage);
+
+  const paginatedUnite = filteredUnite.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   const loadUnite = async () => {
     try {
@@ -40,7 +54,7 @@ const page = () => {
     if (status === "authenticated") {
       loadUnite(); // charge les clients au montage
     }
-    
+
     if (status === "unauthenticated") {
       redirect("/");
     }
@@ -112,12 +126,19 @@ const page = () => {
   return (
     <Wrapper>
       <div>
-        <div className="mb-4">
+        <div className="flex gap-2 mb-4">
           <button className="btn btn-primary" onClick={onpenCreateModal}>
             Ajouter une unité
           </button>
+          <input
+            type="text"
+            placeholder="Rechercher une unitée..."
+            className="input input-bordered w-full max-w-sm mb-4"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        {unite.length > 0 ? (
+        {filteredUnite.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="table table-zebra border border-base-300">
               <thead className="bg-base-200">
@@ -129,7 +150,7 @@ const page = () => {
               </thead>
 
               <tbody>
-                {unite.map((u) => (
+                {paginatedUnite.map((u) => (
                   <tr key={u.id}>
                     <td className="border border-base-300 font-semibold">
                       {u.nom}
@@ -153,6 +174,27 @@ const page = () => {
                 ))}
               </tbody>
             </table>
+            <div className="flex justify-center gap-2 mt-4">
+              <button
+                className="btn btn-sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                Précédent
+              </button>
+
+              <span className="px-2">
+                Page {currentPage} / {totalPages}
+              </span>
+
+              <button
+                className="btn btn-sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                Suivant
+              </button>
+            </div>
           </div>
         ) : (
           <EmptyState iconComponent={Group} message="Aucune unité disponible" />

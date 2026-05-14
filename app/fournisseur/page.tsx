@@ -19,6 +19,21 @@ const Page = () => {
   const [editMode, setEditMode] = useState(false);
   const [fournisseurs, setFournisseurs] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+  
+    const filteredFournisseurs = fournisseurs.filter((f) =>
+      f.nom.toLowerCase().includes(search.toLowerCase()),
+    );
+  
+    const totalPages = Math.ceil(filteredFournisseurs.length / itemsPerPage);
+  
+    const paginatedClients = filteredFournisseurs.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage,
+    );
+
 
 const loadFournisseurs = async () => {
   try {
@@ -170,13 +185,20 @@ const loadFournisseurs = async () => {
 
   return (
     <Wrapper>
-      <div className="mb-4">
+       <div className="flex gap-2 mb-4">
         <button className="btn btn-primary" onClick={openModal}>
           Ajouter un fournisseur
         </button>
+        <input
+          type="text"
+          placeholder="Rechercher un fournisseur..."
+          className="input input-bordered w-full max-w-sm mb-4"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      {fournisseurs.length > 0 ? (
+      {filteredFournisseurs.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="table table-zebra border border-base-300">
             <thead className="bg-base-200">
@@ -189,7 +211,7 @@ const loadFournisseurs = async () => {
             </thead>
 
             <tbody>
-              {fournisseurs.map((f) => (
+              {paginatedClients.map((f) => (
                 <tr key={f.id}>
                   <td className="border border-base-300 font-semibold">
                     {f.nom}
@@ -220,6 +242,27 @@ const loadFournisseurs = async () => {
               ))}
             </tbody>
           </table>
+        <div className="flex justify-center gap-2 mt-4">
+            <button
+              className="btn btn-sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              Précédent
+            </button>
+
+            <span className="px-2">
+              Page {currentPage} / {totalPages}
+            </span>
+
+            <button
+              className="btn btn-sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Suivant
+            </button>
+          </div>
         </div>
       ) : (
         <EmptyState iconComponent={Group} message="Aucun fournisseur" />

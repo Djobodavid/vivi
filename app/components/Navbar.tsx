@@ -91,14 +91,7 @@ const Navbar = () => {
       icon: LayoutDashboard,
       roles: ["admin"],
     },
-    { href: "/clients", label: "Clients", icon: User, roles: ["admin", "agent"] },
-    {
-      href: "/fournisseur",
-      label: "Fournisseurs",
-      icon: User,
-      roles: ["admin"],
-    },
-
+   
     // 🔥 EXEMPLE DROPDOWN
     {
       label: "Paramètres",
@@ -119,6 +112,13 @@ const Navbar = () => {
           icon: User,
           roles: ["admin"],
         },
+        { href: "/clients", label: "Clients", icon: User, roles: ["admin", "agent"] },
+    {
+      href: "/fournisseur",
+      label: "Fournisseurs",
+      icon: User,
+      roles: ["admin"],
+    },
       ],
     },
     

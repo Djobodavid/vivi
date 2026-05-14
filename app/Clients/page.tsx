@@ -9,9 +9,11 @@ import EmptyState from "../components/EmptyState";
 import { Group, Pencil, Trash } from "lucide-react";
 import { redirect, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const page = () => {
-  const { status } = useSession(); // ✅ AJOUT ICI
+  const { data: session, status } = useSession();
+  const role = (session?.user as any)?.role;
   const [name, setName] = useState("");
   const [telephone, setTelephone] = useState("");
   const [adresse, setAdresse] = useState("");
@@ -19,11 +21,32 @@ const page = () => {
   const [editMode, setEditMode] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-const searchParam=useSearchParams()
-const open_modal=searchParam.get("action")
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const filteredClient = clients.filter((c) =>
+    c.nom.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const router = useRouter();
+
+  const canManageClient = role === "admin";
+
+  const totalPages = Math.ceil(filteredClient.length / itemsPerPage);
+
+  const paginatedClients = filteredClient.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+  const searchParam = useSearchParams();
+  const open_modal = searchParam.get("action");
 
   const loadClient = async () => {
     try {
+      if (!canManageClient) {
+    return;
+  }
       const res = await axios.get("/api/client");
 
       if (res.data.success) {
@@ -42,17 +65,22 @@ const open_modal=searchParam.get("action")
 
   useEffect(() => {
     if (status === "authenticated") {
-      loadClient(); // charge les clients au montage
+      loadClient();
     }
-    if(open_modal&&open_modal==="open"){
-      onpenCreateModal()
-    }
+
     if (status === "unauthenticated") {
       redirect("/");
     }
   }, [status]);
 
+  useEffect(() => {
+    if (open_modal === "open") {
+      onpenCreateModal();
+    }
+  }, [open_modal]);
+
   const onpenCreateModal = () => {
+    
     setEditMode(false);
     setName("");
     setTelephone("");
@@ -74,6 +102,10 @@ const open_modal=searchParam.get("action")
   };
 
   const closeModal = () => {
+    if (!canManageClient) {
+    
+    return;
+  }
     setEditMode(false);
     setName("");
     setTelephone("");
@@ -94,9 +126,11 @@ const open_modal=searchParam.get("action")
         telephone,
       });
 
-      toast.success(res.data.message); // 🔥 message backend
+      toast.success(res.data.message);
       closeModal();
-      loadClient();
+      if (role && role !== "admin") {
+        router.push("/vente");
+      }
     } catch (error: any) {
       console.error(error);
 
@@ -162,13 +196,20 @@ const open_modal=searchParam.get("action")
   };
   return (
     <Wrapper>
-      <div className="mb-4">
+      <div className="flex gap-2 mb-4">
         <button className="btn btn-primary" onClick={onpenCreateModal}>
           Ajouter un client
         </button>
+        <input
+          type="text"
+          placeholder="Rechercher un client..."
+          className="input input-bordered w-full max-w-sm mb-4"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      {clients.length > 0 ? (
+      {filteredClient.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="table table-zebra border border-base-300">
             <thead className="bg-base-200">
@@ -180,7 +221,7 @@ const open_modal=searchParam.get("action")
               </tr>
             </thead>
             <tbody>
-              {clients.map((client) => (
+              {paginatedClients.map((client) => (
                 <tr key={client.id}>
                   <td className="border border-base-300 font-semibold">
                     {client.nom}
@@ -209,6 +250,27 @@ const open_modal=searchParam.get("action")
               ))}
             </tbody>
           </table>
+          <div className="flex justify-center gap-2 mt-4">
+            <button
+              className="btn btn-sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              Précédent
+            </button>
+
+            <span className="px-2">
+              Page {currentPage} / {totalPages}
+            </span>
+
+            <button
+              className="btn btn-sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Suivant
+            </button>
+          </div>
         </div>
       ) : (
         <EmptyState iconComponent={Group} message="Aucun client disponible" />

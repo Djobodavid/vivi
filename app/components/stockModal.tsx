@@ -12,6 +12,7 @@ type Props = {
   quantiteStock: string;
   quantiteMinStock: string;
   prixUnitaire: string;
+  isAdmin: boolean;
   prixVenteUnitaire: string;
   autreFrais: string;
   observation: string;
@@ -65,6 +66,7 @@ const StockModal = ({
   unites,
   loading,
   editMode,
+  isAdmin,
   onClose,
   onSubmit,
   onChangeDateStock,
@@ -148,25 +150,26 @@ const StockModal = ({
             required
           />
 
-          {/* PRIX */}
-          <input
-            type="number"
-            placeholder="Prix unitaire"
-            value={prixUnitaire}
-            onChange={(e) => onChangePrixUnitaire(e.target.value)}
-            className="input input-bordered w-full"
-            required
-          />
+          {/* PRIX -> ADMIN UNIQUEMENT */}
+          {isAdmin && (
+            <>
+              <input
+                type="number"
+                placeholder="Prix unitaire"
+                value={prixUnitaire}
+                onChange={(e) => onChangePrixUnitaire(e.target.value)}
+                className="input input-bordered w-full"
+              />
 
-          <input
-            type="number"
-            placeholder="Prix de vente unitaire"
-            value={prixVenteUnitaire}
-            onChange={(e) => onChangePrixVenteUnitaire(e.target.value)}
-            className="input input-bordered w-full"
-            required
-          />
-
+              <input
+                type="number"
+                placeholder="Prix de vente unitaire"
+                value={prixVenteUnitaire}
+                onChange={(e) => onChangePrixVenteUnitaire(e.target.value)}
+                className="input input-bordered w-full"
+              />
+            </>
+          )}
           {/* AUTRE FRAIS */}
           <input
             type="number"
@@ -219,8 +222,6 @@ const StockModal = ({
               </option>
             ))}
           </select>
-
-          
 
           {/* UNITE */}
           <select
