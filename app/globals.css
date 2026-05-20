@@ -26,6 +26,10 @@
 }
 
 @media print {
+  /* @page {
+    size: 105mm 148mm;
+    margin: 10mm;
+  } */
   body * {
     visibility: hidden;
   }

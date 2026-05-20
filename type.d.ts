@@ -34,3 +34,8 @@ export type Fournisseur = {
 export type Unite = {
   name: string
 }
+
+type TypeAppContext={
+  formdataVente:any
+  setFormdataVente:(o:any)=>void
+}

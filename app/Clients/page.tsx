@@ -10,6 +10,7 @@ import { Group, Pencil, Trash } from "lucide-react";
 import { redirect, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const page = () => {
   const { data: session, status } = useSession();
@@ -25,6 +26,12 @@ const page = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  const pathname = usePathname();
+
+  const searchParam = useSearchParams();
+const from = searchParam.get("from");
+
+
   const filteredClient = clients.filter((c) =>
     c.nom.toLowerCase().includes(search.toLowerCase()),
   );
@@ -39,7 +46,7 @@ const page = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
-  const searchParam = useSearchParams();
+  
   const open_modal = searchParam.get("action");
 
   const loadClient = async () => {
@@ -128,9 +135,10 @@ const page = () => {
 
       toast.success(res.data.message);
       closeModal();
-      if (role && role !== "admin") {
-        router.push("/vente");
-      }
+       if (from === "vente") {
+      router.push("/vente");
+      return;
+    }
     } catch (error: any) {
       console.error(error);
 

@@ -26,7 +26,7 @@ export const GET = async () => {
         nom: ProduitSchema.nom,
         image: ProduitSchema.image,
         categoryNom: CategorySchema.nom,
-        stock_total: sql<number>`SUM(${StockSchema.quantite_stock})`,
+        stock_total: sql<number>`SUM(${StockSchema.quantite_restante})`,
         prix_min: sql<number>`MIN(${StockSchema.prix_unitaire_vente})`,
         prix_max: sql<number>`MAX(${StockSchema.prix_unitaire_vente})`,
       })
@@ -46,7 +46,7 @@ export const GET = async () => {
         ProduitSchema.image,
         CategorySchema.nom,
       )
-      .having(sql`SUM(${StockSchema.quantite_stock}) > 0`);
+      .having(sql`SUM(${StockSchema.quantite_restante}) > 0`);
 
     return apiResponse(
       true,
@@ -63,38 +63,25 @@ export const GET = async () => {
 export const POST = async (req: Request) => {
   try {
     const body = await req.json();
+    const { items, clientId, modePaiement, montantRecu, utilisateurId } = body;
 
-    const { items, total, clientId, modePaiement, montantRecu, utilisateurId } =
-      body;
-
-    // 🔥 VALIDATION
     if (!items || items.length === 0) {
       return apiResponse(false, "Panier vide", null, 400);
     }
 
-    if (!total || Number(total) <= 0) {
-      return apiResponse(false, "Total invalide", null, 400);
-    }
-
-    if (Number(montantRecu) < Number(total)) {
-      return apiResponse(false, "Montant insuffisant", null, 400);
-    }
-
     return await drizzleDb.transaction(async (tx) => {
       const venteId = uuidv4();
+      let totalReel = 0;
 
-      // 🔥 1. CREATION VENTE
-      await tx.insert(VenteSchema).values({
-        id: venteId,
-        total: String(total),
-        clientId: clientId || null,
-        mode_paiement: modePaiement || "cash",
-        montant_recu: String(montantRecu),
-        monnaie_rendue: String(Number(montantRecu) - Number(total)),
-        utilisateurId,
-      });
+      const venteItems: {
+        produitId: string;
+        stockId: string;
+        quantite: number;
+        prixUnitaire: number;
+        totalLigne: number;
+      }[] = [];
 
-      // 🔥 2. TRAITEMENT PRODUITS
+      // 🔥 ÉTAPE 1 — Calcul FIFO SANS toucher au stock
       for (const item of items) {
         let quantityToSell = Number(item.quantity);
 
@@ -103,47 +90,75 @@ export const POST = async (req: Request) => {
           .from(StockSchema)
           .where(
             sql`${StockSchema.produitId} = ${item.productId}
-        AND ${StockSchema.date_expiration} > NOW()`,
+            AND ${StockSchema.date_expiration} > NOW()
+            AND ${StockSchema.statut} = 'operationnel'`
           )
-          .orderBy(asc(StockSchema.date_stock));
+          .orderBy(asc(StockSchema.date_expiration));
 
         for (const stock of stocks) {
           if (quantityToSell <= 0) break;
+          if (Number(stock.quantite_restante) <= 0) continue;
 
-          if (Number(stock.quantite_stock) <= 0) continue;
+          const used = Math.min(Number(stock.quantite_restante), quantityToSell);
+          const prixReel = Number(stock.prix_unitaire_vente);
+          const totalLigne = used * prixReel;
 
-          const used = Math.min(Number(stock.quantite_stock), quantityToSell);
-
-          // 🔥 INSERT VENTE ITEM (⚠️ PAS DE id → auto)
-          await tx.insert(VenteItemSchema).values({
-            venteId: venteId,
+          totalReel += totalLigne;
+          venteItems.push({
             produitId: item.productId,
             stockId: stock.id,
             quantite: used,
-            prix_unitaire: String(stock.prix_unitaire_vente),
-            total: String(used * Number(stock.prix_unitaire_vente)),
+            prixUnitaire: prixReel,
+            totalLigne,
           });
-
-          // 🔥 UPDATE STOCK
-          await tx
-            .update(StockSchema)
-            .set({
-              quantite_stock: sql`${StockSchema.quantite_stock} - ${used}`,
-            })
-            .where(eq(StockSchema.id, stock.id));
 
           quantityToSell -= used;
         }
 
-        // 🔥 SECURITE
         if (quantityToSell > 0) {
-          throw new Error(
-            `Stock insuffisant pour le produit ${item.productId}`,
-          );
+          throw new Error(`Stock insuffisant pour le produit ${item.productId}`);
         }
       }
 
-      return apiResponse(true, "Vente enregistrée avec succès", null, 201);
+      // ✅ ÉTAPE 2 — Valider le montant AVANT de toucher au stock
+      if (modePaiement !== "credit" && Number(montantRecu) < totalReel) {
+        throw new Error(`Montant insuffisant. Total réel : ${totalReel} FCFA`);
+      }
+
+      // 🔥 ÉTAPE 3 — Décrémenter le stock SEULEMENT si montant OK
+      for (const vi of venteItems) {
+        await tx
+          .update(StockSchema)
+          .set({
+            quantite_restante: sql`${StockSchema.quantite_restante} - ${vi.quantite}`,
+          })
+          .where(eq(StockSchema.id, vi.stockId));
+      }
+
+      // 🔥 ÉTAPE 4 — Créer la vente
+      await tx.insert(VenteSchema).values({
+        id: venteId,
+        total: String(totalReel),
+        clientId: clientId || null,
+        mode_paiement: modePaiement || "cash",
+        montant_recu: String(montantRecu),
+        monnaie_rendue: String(Number(montantRecu) - totalReel),
+        utilisateurId,
+      });
+
+      // 🔥 ÉTAPE 5 — Insérer les lignes
+      for (const vi of venteItems) {
+        await tx.insert(VenteItemSchema).values({
+          venteId,
+          produitId: vi.produitId,
+          stockId: vi.stockId,
+          quantite: vi.quantite,
+          prix_unitaire: String(vi.prixUnitaire),
+          total: String(vi.totalLigne),
+        });
+      }
+
+      return apiResponse(true, "Vente enregistrée avec succès", { total: totalReel }, 201);
     });
   } catch (error: any) {
     console.error(error);

@@ -23,6 +23,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { FaBriefcaseMedical } from "react-icons/fa";
+import AlerteCloche from "./AlerteCloche/page";
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -58,18 +59,22 @@ const Navbar = () => {
       roles: ["admin", "agent", "gestionnaire"],
     },
 
-
     {
       label: "Caisse",
-      roles: ["admin","agent"],
+      roles: ["admin", "agent"],
       icon: Wallet,
       children: [
-        { href: "/vente", label: "Vente", icon: Layers, roles: ["admin","agent"] },
+        {
+          href: "/vente",
+          label: "Vente",
+          icon: Layers,
+          roles: ["admin", "agent"],
+        },
         {
           href: "/Historiques",
           label: "Historique",
           icon: History,
-          roles: ["admin","agent"],
+          roles: ["admin", "agent"],
         },
       ],
     },
@@ -91,7 +96,7 @@ const Navbar = () => {
       icon: LayoutDashboard,
       roles: ["admin"],
     },
-   
+
     // 🔥 EXEMPLE DROPDOWN
     {
       label: "Paramètres",
@@ -105,6 +110,12 @@ const Navbar = () => {
           icon: ListTree,
           roles: ["admin"],
         },
+        {
+          href: "/reglages",
+          label: "réglages",
+          icon: Settings,
+          roles: ["admin"],
+        },
         { href: "/promotion", label: "Promotion", icon: Tag, roles: ["admin"] },
         {
           href: "/utilisateur",
@@ -112,19 +123,21 @@ const Navbar = () => {
           icon: User,
           roles: ["admin"],
         },
-        { href: "/clients", label: "Clients", icon: User, roles: ["admin", "agent"] },
-    {
-      href: "/fournisseur",
-      label: "Fournisseurs",
-      icon: User,
-      roles: ["admin"],
-    },
+        {
+          href: "/clients",
+          label: "Clients",
+          icon: User,
+          roles: ["admin", "agent"],
+        },
+        {
+          href: "/fournisseur",
+          label: "Fournisseurs",
+          icon: User,
+          roles: ["admin"],
+        },
       ],
     },
-    
   ];
-
-  
 
   const renderLinks = (baseClass: string) => (
     <>
@@ -221,8 +234,11 @@ const Navbar = () => {
         </button>
 
         <div className="hidden space-x-2 sm:flex items-center">
+          
           {renderLinks("btn")}
+          {role === "admin" && <AlerteCloche />}{/* ✅ ajoute ça */}
         </div>
+
       </div>
       <div
         className={`absolute top-0 w-full bg-base-100 h-screen flex flex-col gap-2 p-4 transition-all duration-300 sm:hidden z-50 ${menuOpen ? "left-0" : "-left-full"} `}

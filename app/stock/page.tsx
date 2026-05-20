@@ -12,10 +12,9 @@ import { useSession } from "next-auth/react";
 
 const Page = () => {
   const { data: session, status } = useSession();
-const role = (session?.user as any)?.role;
+  const role = (session?.user as any)?.role;
 
-
-const isAdmin = role === "admin";
+  const isAdmin = role === "admin";
   const [dateStock, setDateStock] = useState("");
   const [dateExpiration, setDateExpiration] = useState("");
 
@@ -36,6 +35,10 @@ const isAdmin = role === "admin";
   const [category, setCategory] = useState<{ label: string; value: string }[]>(
     [],
   );
+  const [selectedStock, setSelectedStock] = useState<any>(null);
+
+  const [validationPrixAchat, setValidationPrixAchat] = useState("");
+  const [validationPrixVente, setValidationPrixVente] = useState("");
   const [produitId, setProduitId] = useState("");
   const [fournisseurId, setFournisseurId] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -51,7 +54,6 @@ const isAdmin = role === "admin";
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProduit, setSelectedProduit] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  
 
   const handleView = (produit: any) => {
     setSelectedProduit(produit);
@@ -67,17 +69,55 @@ const isAdmin = role === "admin";
           produit: s.produit,
           totalStock: 0,
           totalRestant: 0,
+          totalPerime: 0, // ✅ nouveau
           lots: [],
         };
       }
 
+      const isExpired = new Date(s.date_expiration) < new Date();
       acc[key].totalStock += Number(s.quantite_stock);
-      acc[key].totalRestant += Number(s.quantite_restante);
+      acc[key].totalRestant += isExpired ? 0 : Number(s.quantite_restante);
+      acc[key].totalPerime += isExpired ? Number(s.quantite_restante) : 0;
       acc[key].lots.push(s);
 
       return acc;
     }, {}),
   );
+
+  const handleOpenValidation = (stock: any) => {
+    setSelectedStock(stock);
+
+    setValidationPrixAchat(stock.prix_unitaire_achat || "");
+    setValidationPrixVente(stock.prix_unitaire_vente || "");
+
+    (
+      document.getElementById("validation_modal") as HTMLDialogElement
+    )?.showModal();
+  };
+
+  const handleValidate = async () => {
+    try {
+      const res = await axios.patch("/api/stock", {
+        id: selectedStock.id,
+
+        prix_unitaire_achat: validationPrixAchat,
+
+        prix_unitaire_vente: validationPrixVente,
+      });
+
+      toast.success(res.data.message);
+
+      await loadStock();
+
+      const modal = document.getElementById(
+        "validation_modal",
+      ) as HTMLDialogElement;
+
+      modal.close();
+    } catch (error: any) {
+      toast.error("Erreur validation");
+    }
+  };
 
   const filteredStocks = groupedStocks.filter((g: any) => {
     const matchSearch = g.produit.nom
@@ -227,6 +267,10 @@ const isAdmin = role === "admin";
     }
   };
 
+  const closeValidationModal = () => {
+    (document.getElementById("validation_modal") as HTMLDialogElement)?.close();
+  };
+
   const openModal = () => {
     setEditMode(false);
 
@@ -316,8 +360,6 @@ const isAdmin = role === "admin";
     }
   };
 
-  
-
   return (
     <Wrapper>
       <div className="flex gap-2 mb-4">
@@ -354,36 +396,42 @@ const isAdmin = role === "admin";
       {filteredStocks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {paginatedStocks.map((g: any, index: number) => (
-            <div
-              key={index}
-              className="border p-4 rounded-xl shadow flex flex-col gap-2"
-            >
-              <div className="flex items-center gap-3">
-                <img
-                  src={g.produit.image || "/no-image.png"}
-                  alt={g.produit?.nom || "produit"}
-                  className="w-12 h-12 object-cover rounded"
-                />
-                <div>
-                  <p className="font-bold">{g.produit.nom}</p>
-                  <p className="font-bold">
-                    {g.lots[0]?.category?.nom || "Sans catégorie"}
-                  </p>
-                </div>
-              </div>
+ <div
+  key={index}
+  className="border p-4 rounded-xl shadow flex flex-col gap-2"
+  style={g.totalRestant === 0 ? { borderColor: "#E24B4A", backgroundColor: "#FEF2F2" } : {}}
+>
+    <div className="flex items-center gap-3">
+      <img
+        src={g.produit.image || "/no-image.png"}
+        alt={g.produit?.nom || "produit"}
+        className="w-12 h-12 object-cover rounded"
+      />
+      <div>
+        <p className="font-bold">{g.produit.nom}</p>
+        <p className="font-bold">{g.lots[0]?.category?.nom || "Sans catégorie"}</p>
+      </div>
+    </div>
 
-              <p>Stock initial: {g.totalStock}</p>
-              <p>Stock restant: {g.totalRestant}</p>
-              <p>Stock vendu: {g.totalStock - g.totalRestant}</p>
+    {/* ✅ Badge épuisé */}
+    {g.totalRestant === 0 && (
+    <span className="badge badge-error w-fit">Épuisé</span>
+  )}
 
-              <button
-                onClick={() => handleView(g)}
-                className="btn btn-sm btn-primary mt-2"
-              >
-                Voir détails
-              </button>
-            </div>
-          ))}
+
+    <p>Stock initial: {g.totalStock}</p>
+    <p className="text-error">Stock périmé: {g.totalPerime}</p>
+    <p>Stock vendu: {g.totalStock - g.totalPerime - g.totalRestant}</p>
+    <p>Stock restant: {g.totalRestant}</p>
+
+    <button
+      onClick={() => handleView(g)}
+      className="btn btn-sm btn-primary mt-2"
+    >
+      Voir détails
+    </button>
+  </div>
+))}
           {open && selectedProduit && (
             <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
               <div className="bg-white p-4 rounded-lg w-full max-w-4xl overflow-x-auto">
@@ -411,6 +459,32 @@ const isAdmin = role === "admin";
                     {selectedProduit.lots.map((s: any) => {
                       const vendue =
                         Number(s.quantite_stock) - Number(s.quantite_restante);
+                      const isExpired =
+                        new Date(s.date_expiration) < new Date();
+                      const isLowStock =
+                        s.quantite_restante <= s.quantite_min_stock;
+
+                      const isEpuise = Number(s.quantite_restante) === 0;
+
+                      let statusLabel = "";
+                      let statusClass = "";
+
+                      if (isExpired) {
+                        statusLabel = "Expiré";
+                        statusClass = "badge-error";
+                      } else if (isEpuise) {
+                        statusLabel = "Épuisé";
+                        statusClass = "badge-neutral";
+                      } else if (isLowStock) {
+                        statusLabel = "Stock faible";
+                        statusClass = "badge-warning";
+                      } else if (s.statut === "operationnel") {
+                        statusLabel = "Opérationnel";
+                        statusClass = "badge-success";
+                      } else {
+                        statusLabel = "En attente";
+                        statusClass = "badge-warning";
+                      }
 
                       return (
                         <tr key={s.id}>
@@ -427,15 +501,19 @@ const isAdmin = role === "admin";
                           </td>
 
                           <td>
-                            {new Date(s.date_expiration) < new Date() ? (
-                              <span className="badge badge-error">Expiré</span>
-                            ) : s.quantite_restante <= s.quantite_min_stock ? (
-                              <span className="badge badge-warning">
-                                Stock faible
-                              </span>
-                            ) : (
-                              <span className="badge badge-success">OK</span>
-                            )}
+                            <span className={`badge ${statusClass}`}>
+                              {statusLabel}
+                            </span>
+                            {s.statut === "en_attente" &&
+                              isAdmin &&
+                              !isExpired && (
+                                <button
+                                  className="btn btn-xs btn-success mt-1 ml-2"
+                                  onClick={() => handleOpenValidation(s)}
+                                >
+                                  Valider
+                                </button>
+                              )}
                           </td>
                         </tr>
                       );
@@ -452,6 +530,7 @@ const isAdmin = role === "admin";
               </div>
             </div>
           )}
+
           <div className="flex justify-center mt-4 gap-2">
             <button
               className="btn btn-sm"
@@ -513,6 +592,38 @@ const isAdmin = role === "admin";
         onChangeCategory={setCategoryId}
         isAdmin={isAdmin}
       />
+
+      <dialog id="validation_modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">Validation du stock</h3>
+          <button
+            type="button"
+            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            onClick={closeValidationModal}
+          >
+            ✕
+          </button>
+          <input
+            type="number"
+            placeholder="Prix achat"
+            className="input input-bordered w-full mb-3"
+            value={validationPrixAchat}
+            onChange={(e) => setValidationPrixAchat(e.target.value)}
+          />
+
+          <input
+            type="number"
+            placeholder="Prix vente"
+            className="input input-bordered w-full mb-3"
+            value={validationPrixVente}
+            onChange={(e) => setValidationPrixVente(e.target.value)}
+          />
+
+          <button className="btn btn-success w-full" onClick={handleValidate}>
+            Valider le stock
+          </button>
+        </div>
+      </dialog>
     </Wrapper>
   );
 };

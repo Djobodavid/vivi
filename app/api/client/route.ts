@@ -1,5 +1,5 @@
 import { drizzleDb } from "@/app/config/db";
-import { ClientSchema } from "@/app/config/db/schema";
+import { ClientSchema, VenteSchema } from "@/app/config/db/schema";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
 
@@ -37,6 +37,8 @@ export const POST = async (req: Request) => {
       .insert(ClientSchema)
       .values({ id: uuidv4(), nom, adresse, telephone })
       .returning();
+
+    
 
     return apiResponse(true, "Client créé avec succès", newClient[0], 201);
   } catch (error) {
@@ -88,6 +90,21 @@ export const DELETE = async (req: Request) => {
       return apiResponse(false, "ID manquant", null, 400);
     }
 
+    // 🔥 vérifier AVANT suppression
+    const venteExist = await drizzleDb
+      .select()
+      .from(VenteSchema)
+      .where(eq(VenteSchema.clientId, id));
+
+    if (venteExist.length > 0) {
+      return apiResponse(
+        false,
+        "Impossible de supprimer ce client car il possède des ventes",
+        null,
+      );
+    }
+
+    // ✅ suppression
     const deleted = await drizzleDb
       .delete(ClientSchema)
       .where(eq(ClientSchema.id, id))
@@ -98,8 +115,10 @@ export const DELETE = async (req: Request) => {
     }
 
     return apiResponse(true, "Client supprimé avec succès", null, 200);
+
   } catch (error) {
     console.error(error);
+
     return apiResponse(false, "Erreur serveur", null, 500);
   }
 };

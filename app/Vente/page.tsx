@@ -9,8 +9,11 @@ import { addAbortSignal } from "stream";
 import { redirect } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useAppContext } from "../components/providers/context.proveder";
 
 const page = () => {
+  const { formdataVente, setFormdataVente } = useAppContext();
+
   const { status } = useSession(); // ✅ AJOUT ICI
   const [search, setSearch] = useState<string>("");
   const [stocks, setStocks] = useState<any[]>([]);
@@ -21,6 +24,18 @@ const page = () => {
   const [openClientModal, setOpenClientModal] = useState(false);
   const [modePaiement, setModePaiement] = useState("cash");
   const [client, setClient] = useState<{ label: string; value: string }[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    totalReel: number;
+    details: {
+      nom?: string;
+      productId: string;
+      quantite: number;
+      prixUnitaire: number;
+      total: number;
+    }[];
+  } | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,17 +62,11 @@ const page = () => {
         return;
       }
 
-      if (modePaiement !== "credit" && montantRecu < total) {
-        toast.error("Montant insuffisant");
-        return;
-      }
-
       const payload = {
         items: order.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
-        total,
         clientId: clientId || null,
         modePaiement,
         montantRecu,
@@ -67,19 +76,43 @@ const page = () => {
       const res = await axios.post("/api/vente", payload);
 
       if (res.data.success) {
-        toast.success("Vente enregistrée");
-
-        // 🔥 reset
+        toast.success(
+          `Vente enregistrée — Total : ${res.data.data?.total} FCFA`,
+        );
         setOrder([]);
         setMontantRecu(0);
         setClientId("");
-
-        // 🔥 refresh stock
         loadProduits();
       }
     } catch (error: any) {
-      console.error(error);
       toast.error(error.response?.data?.message || "Erreur lors de la vente");
+    }
+  };
+
+  const handlePreviewVente = async () => {
+    if (order.length === 0) {
+      toast.error("Panier vide");
+      return;
+    }
+
+    setLoadingPreview(true);
+    try {
+      const res = await axios.post("/api/vente/preview", {
+        items: order.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          nom: item.name,
+        })),
+      });
+
+      if (res.data.success) {
+        setPreviewData(res.data.data);
+        setShowConfirmModal(true);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Erreur preview");
+    } finally {
+      setLoadingPreview(false);
     }
   };
 
@@ -330,9 +363,14 @@ const page = () => {
           <div className="border-t pt-4 mt-4 space-y-3">
             {/* TOTAL */}
             <div className="flex justify-between font-bold text-lg">
-              <span>Total</span>
+              <span>Total estimé</span>
               <span>{total} FCFA</span>
             </div>
+
+            {/* ✅ Avertissement si prix multiple */}
+            <p className="text-xs text-warning">
+              * Le total final peut varier selon les prix des lots disponibles
+            </p>
 
             {/* MONTANT REÇU */}
             <div className="flex justify-items-start">
@@ -372,7 +410,7 @@ const page = () => {
 
               <button
                 className="btn btn-sm btn-primary whitespace-nowrap"
-                onClick={() => router.push("/clients?action=open")}
+                onClick={() => router.push("/clients?action=open&from=vente")}
               >
                 + Nouveau client
               </button>
@@ -393,13 +431,95 @@ const page = () => {
             {/* BOUTON VALIDER */}
             <button
               className="btn btn-primary w-full"
-              onClick={handleSubmitVente}
+              onClick={handlePreviewVente}
+              disabled={loadingPreview}
             >
-              Valider la vente
+              {loadingPreview ? "Calcul en cours..." : "Voir le total réel"}
             </button>
           </div>
         </div>
       </div>
+
+      {showConfirmModal && previewData && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-2xl w-full max-w-md font-mono text-sm">
+            <h2 className="font-bold text-lg mb-4 text-center">
+              Confirmation de vente
+            </h2>
+
+            <table className="w-full mb-4">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left pb-2">Produit</th>
+                  <th className="text-center pb-2">Qté</th>
+                  <th className="text-right pb-2">Prix</th>
+                  <th className="text-right pb-2">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previewData.details.map((d, i) => (
+                  <tr key={i} className="border-b">
+                    <td className="py-1">{d.nom || d.productId}</td>
+                    <td className="text-center py-1">{d.quantite}</td>
+                    <td className="text-right py-1">{d.prixUnitaire} FCFA</td>
+                    <td className="text-right py-1 font-bold">
+                      {d.total} FCFA
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="flex justify-between font-bold text-base border-t pt-3 mb-4">
+              <span>Total réel</span>
+              <span className="text-primary">{previewData.totalReel} FCFA</span>
+            </div>
+
+            <div className="flex justify-between mb-4">
+              <span>Montant reçu</span>
+              <span>{montantRecu} FCFA</span>
+            </div>
+
+            <div className="flex justify-between mb-6">
+              <span>Monnaie à rendre</span>
+              <span className="font-bold">
+                {montantRecu - previewData.totalReel > 0
+                  ? montantRecu - previewData.totalReel
+                  : 0}{" "}
+                FCFA
+              </span>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="btn btn-outline w-1/2"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Annuler
+              </button>
+              <button
+                className="btn btn-primary w-1/2"
+                onClick={async () => {
+                  if (
+                    montantRecu < previewData.totalReel &&
+                    modePaiement !== "credit"
+                  ) {
+                    toast.error(
+                      `Montant insuffisant. Total réel : ${previewData.totalReel} FCFA`,
+                    );
+                    setShowConfirmModal(false);
+                    return;
+                  }
+                  setShowConfirmModal(false);
+                  await handleSubmitVente();
+                }}
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Wrapper>
   );
 };

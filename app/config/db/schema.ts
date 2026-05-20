@@ -1,3 +1,4 @@
+
 import {
   integer,
   numeric,
@@ -159,4 +160,11 @@ export const VenteItemSchema = pgTable("vente_item", {
   prix_unitaire: numeric("prix_unitaire").notNull(),
 
   total: numeric("total").notNull(),
+});
+
+export const ParametreSchema = pgTable("parametre", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cle: varchar("cle").notNull().unique(), // ex: "seuil_stock_min"
+  valeur: varchar("valeur").notNull(),    // ex: "20"
+  description: varchar("description"),
 });
