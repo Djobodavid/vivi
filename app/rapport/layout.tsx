@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  Stethoscope,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -23,6 +24,7 @@ const sidebarLinks = [
       { href: "/rapport/ventes", label: "Rapport ventes", icon: FileText },
       { href: "/rapport/stock", label: "Rapport stock", icon: Warehouse },
       { href: "/rapport/pertes", label: "Rapport pertes", icon: TrendingDown },
+      { href: "/rapport/consultations", label: "Rapport consultations", icon: Stethoscope },
     ],
   },
   {

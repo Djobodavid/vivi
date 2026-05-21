@@ -1,5 +1,6 @@
 
 import {
+  boolean,
   integer,
   numeric,
   pgTable,
@@ -167,4 +168,19 @@ export const ParametreSchema = pgTable("parametre", {
   cle: varchar("cle").notNull().unique(), // ex: "seuil_stock_min"
   valeur: varchar("valeur").notNull(),    // ex: "20"
   description: varchar("description"),
+});
+
+export const ConsultationSchema = pgTable("consultation", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  nom: varchar("nom").notNull(),
+  prenom: varchar("prenom").notNull(),
+  diagnostic: varchar("diagnostic").notNull(),
+  traitement: varchar("traitement").notNull(),
+  prix: numeric("prix").notNull().default("0"), // ✅ prix figé au moment de la création
+  // Schema
+supprime: boolean("supprime").default(false),
+  date_consultation: timestamp("date_consultation").defaultNow(),
+  utilisateurId: uuid("utilisateurId")
+    .references(() => UserSchema.id)
+    .notNull(),
 });

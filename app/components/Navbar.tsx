@@ -11,6 +11,7 @@ import {
   Package,
   Settings,
   ShoppingCart,
+  Stethoscope,
   Tag,
   User,
   Wallet,
@@ -78,6 +79,14 @@ const Navbar = () => {
         },
       ],
     },
+
+    {
+      href: "/consultations",
+      label: "consultations",
+      icon: Stethoscope,
+      roles: ["admin"],
+    },
+
     {
       href: "/produit",
       label: "Produits",

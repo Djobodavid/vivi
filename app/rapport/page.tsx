@@ -4,12 +4,13 @@ import Wrapper from "../components/Wrapper";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { Stethoscope } from "lucide-react";
 
 type DashboardData = {
   ventesJour: { count: number; total: number };
   caMois: number;
   beneficeMois: number;
-
+  revenuConsultations: number;
   lotsPerimes: number;
   beneficeNet: number;
   pertes: {
@@ -48,14 +49,20 @@ const Page = () => {
   const [periode, setPeriode] = useState("mois");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [totalConsultations, setTotalConsultations] = useState(0);
 
   const loadDashboard = async (p = periode, df = dateFrom, dt = dateTo) => {
     try {
       setLoading(true);
       let url = `/api/Dashboard?periode=${p}`;
       if (p === "custom" && df && dt) url += `&dateFrom=${df}&dateTo=${dt}`;
-      const res = await axios.get(url);
+      const [res, resConsultations] = await Promise.all([
+        axios.get(url),
+        axios.get("/api/consultation"),
+      ]);
+
       if (res.data.success) setData(res.data.data);
+      setTotalConsultations(resConsultations.data.data?.length ?? 0);
     } catch (error) {
       console.error(error);
     } finally {
@@ -128,28 +135,31 @@ const Page = () => {
           </div>
         </div>
         {/* BÉNÉFICE — remplace la 3ème carte ligne 1 */}
+
+        
+
         <div className="stat bg-base-100 border border-base-300 rounded-2xl">
-          <div className="stat-title">Bénéfice du mois</div>
-          <div
-            className="stat-value text-2xl"
-            style={{
-              color:
-                (data?.beneficeNet || 0) - (data?.pertes.total || 0) >= 0
-                  ? "#3B6D11"
-                  : "#A32D2D",
-            }}
-          >
-            {formatFCFA((data?.beneficeNet || 0) - (data?.pertes.total || 0))}
-          </div>
-          <div className="stat-desc flex flex-col gap-1 mt-1">
-            <span style={{ color: "#3B6D11" }}>
-              Brut: +{formatFCFA(data?.beneficeNet || 0)}
-            </span>
-            <span style={{ color: "#A32D2D" }}>
-              Pertes: -{formatFCFA(data?.pertes.total || 0)}
-            </span>
-          </div>
-        </div>
+  <div className="stat-title">Bénéfice du mois</div>
+  <div
+    className="stat-value text-2xl"
+    style={{
+      color: (data?.beneficeNet || 0) >= 0 ? "#3B6D11" : "#A32D2D",
+    }}
+  >
+    {formatFCFA(data?.beneficeNet || 0)}
+  </div>
+  <div className="stat-desc flex flex-col gap-1 mt-1">
+    <span style={{ color: "#3B6D11" }}>
+      Produits: +{formatFCFA(data?.beneficeMois || 0)}
+    </span>
+    <span style={{ color: "#3B6D11" }}>
+      Consultations: +{formatFCFA(data?.revenuConsultations || 0)}
+    </span>
+    <span style={{ color: "#A32D2D" }}>
+      Pertes: -{formatFCFA(data?.pertes.total || 0)}
+    </span>
+  </div>
+</div>
       </div>
 
       {/* MÉTRIQUES LIGNE 2 */}
@@ -175,6 +185,18 @@ const Page = () => {
           </div>
           <div className="stat-desc text-red-400">lots périmés non vendus</div>
         </div>
+
+        <div className="stat bg-base-100 border border-base-300 rounded-2xl">
+          <div className="stat-figure text-primary">
+            <Stethoscope size={28} />
+          </div>
+          <div className="stat-title">Consultations</div>
+          <div className="stat-value text-primary text-2xl">
+            {totalConsultations}
+          </div>
+          <div className="stat-desc">Total enregistrées</div>
+        </div>
+
         {/* ✅ NOUVEAU */}
         <div className="stat bg-base-100 border border-base-300 rounded-2xl">
           <div className="stat-title">Stocks épuisés</div>
@@ -183,23 +205,7 @@ const Page = () => {
           </div>
           <div className="stat-desc">lots à 0 unité</div>
         </div>
-        <div
-          className="stat bg-base-100 rounded-2xl"
-          style={{
-            border: "0.5px solid #F09595",
-            borderLeft: "4px solid #E24B4A",
-          }}
-        >
-          <div className="stat-title" style={{ color: "#A32D2D" }}>
-            Pertes ({periode})
-          </div>
-          <div className="stat-value text-2xl" style={{ color: "#A32D2D" }}>
-            {formatFCFA(data?.pertes.total || 0)}
-          </div>
-          <div className="stat-desc" style={{ color: "#E24B4A" }}>
-            lots périmés non vendus
-          </div>
-        </div>
+        
       </div>
 
       {/* GRAPHIQUES */}
@@ -337,7 +343,9 @@ const Page = () => {
               >
                 <div>
                   <p className="font-semibold text-sm">{s.nom}</p>
-                  <p className="text-xs text-gray-500">Seuil: {s.seuilMin} 20</p>
+                  <p className="text-xs text-gray-500">
+                    Seuil: {s.seuilMin} 20
+                  </p>
                 </div>
                 <span className="badge badge-warning">
                   {s.totalRestant} restants

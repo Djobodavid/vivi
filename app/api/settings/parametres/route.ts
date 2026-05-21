@@ -19,14 +19,17 @@ export const PUT = async (req: Request) => {
   try {
     const { cle, valeur } = await req.json();
 
-    if (!cle || !valeur) {
+    if (!cle || valeur === undefined || valeur === null) {
       return apiResponse(false, "Champs requis manquants", null, 400);
     }
 
     await drizzleDb
-      .update(ParametreSchema)
-      .set({ valeur })
-      .where(eq(ParametreSchema.cle, cle));
+      .insert(ParametreSchema)
+      .values({ cle, valeur })
+      .onConflictDoUpdate({
+        target: ParametreSchema.cle,
+        set: { valeur },
+      });
 
     return apiResponse(true, "Paramètre mis à jour");
   } catch (error: any) {
