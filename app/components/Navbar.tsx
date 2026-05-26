@@ -101,7 +101,7 @@ const Navbar = () => {
     },
     {
       href: "/rapport",
-      label: "Rapports",
+      label: "Dashboard",
       icon: LayoutDashboard,
       roles: ["admin"],
     },

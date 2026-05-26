@@ -344,7 +344,7 @@ const Page = () => {
                 <div>
                   <p className="font-semibold text-sm">{s.nom}</p>
                   <p className="text-xs text-gray-500">
-                    Seuil: {s.seuilMin} 20
+                    Seuil: {s.seuilMin}
                   </p>
                 </div>
                 <span className="badge badge-warning">

@@ -108,6 +108,7 @@ export const GET = async (req: Request) => {
       .select()
       .from(ParametreSchema)
       .where(eq(ParametreSchema.cle, "seuil_stock_min"));
+      
 
     const seuilMin = Number(seuilParam[0]?.valeur || 20);
 
@@ -117,6 +118,7 @@ export const GET = async (req: Request) => {
         produitId: StockSchema.produitId,
         nom: ProduitSchema.nom,
         totalRestant: sql<number>`SUM(${StockSchema.quantite_restante})`,
+        seuilMin: sql<number>`${seuilMin}`, // ✅ AJOUTER
       })
       .from(StockSchema)
       .leftJoin(ProduitSchema, eq(StockSchema.produitId, ProduitSchema.id))
