@@ -147,3 +147,26 @@ export const PATCH = async (req: Request) => {
     return apiResponse(false, "Erreur serveur");
   }
 };
+
+export const DELETE = async (req: Request) => {
+  try {
+    const { id } = await req.json();
+    const session = await auth();
+    const role = (session?.user as any)?.role;
+
+    if (role !== "admin")
+      return apiResponse(false, "Accès refusé", null, 403);
+
+    if (!id)
+      return apiResponse(false, "ID manquant", null, 400);
+
+    await drizzleDb
+      .update(StockSchema)
+      .set({ quantite_restante: 0 })
+      .where(eq(StockSchema.id, id));
+
+    return apiResponse(true, "Lot retiré avec succès");
+  } catch (error: any) {
+    return apiResponse(false, "Erreur serveur");
+  }
+};

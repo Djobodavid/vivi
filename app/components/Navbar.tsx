@@ -54,13 +54,6 @@ const Navbar = () => {
 
   const navLinks: NavLink[] = [
     {
-      href: "/",
-      label: "Accueil",
-      icon: Home,
-      roles: ["admin", "agent", "gestionnaire"],
-    },
-
-    {
       label: "Caisse",
       roles: ["admin", "agent"],
       icon: Wallet,

@@ -5,6 +5,7 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Stethoscope } from "lucide-react";
+import { toast } from "react-toastify" 
 
 type DashboardData = {
   ventesJour: { count: number; total: number };
@@ -50,6 +51,17 @@ const Page = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [totalConsultations, setTotalConsultations] = useState(0);
+  const [showLotsPerimes, setShowLotsPerimes] = useState(false);
+  const [lotsPerimesDetails, setLotsPerimesDetails] = useState<any[]>([]);
+
+  const loadLotsPerimes = async () => {
+    try {
+      const res = await axios.get("/api/stock/perimes");
+      if (res.data.success) setLotsPerimesDetails(res.data.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const loadDashboard = async (p = periode, df = dateFrom, dt = dateTo) => {
     try {
@@ -136,30 +148,28 @@ const Page = () => {
         </div>
         {/* BÉNÉFICE — remplace la 3ème carte ligne 1 */}
 
-        
-
         <div className="stat bg-base-100 border border-base-300 rounded-2xl">
-  <div className="stat-title">Bénéfice du mois</div>
-  <div
-    className="stat-value text-2xl"
-    style={{
-      color: (data?.beneficeNet || 0) >= 0 ? "#3B6D11" : "#A32D2D",
-    }}
-  >
-    {formatFCFA(data?.beneficeNet || 0)}
-  </div>
-  <div className="stat-desc flex flex-col gap-1 mt-1">
-    <span style={{ color: "#3B6D11" }}>
-      Produits: +{formatFCFA(data?.beneficeMois || 0)}
-    </span>
-    <span style={{ color: "#3B6D11" }}>
-      Consultations: +{formatFCFA(data?.revenuConsultations || 0)}
-    </span>
-    <span style={{ color: "#A32D2D" }}>
-      Pertes: -{formatFCFA(data?.pertes.total || 0)}
-    </span>
-  </div>
-</div>
+          <div className="stat-title">Bénéfice du mois</div>
+          <div
+            className="stat-value text-2xl"
+            style={{
+              color: (data?.beneficeNet || 0) >= 0 ? "#3B6D11" : "#A32D2D",
+            }}
+          >
+            {formatFCFA(data?.beneficeNet || 0)}
+          </div>
+          <div className="stat-desc flex flex-col gap-1 mt-1">
+            <span style={{ color: "#3B6D11" }}>
+              Produits: +{formatFCFA(data?.beneficeMois || 0)}
+            </span>
+            <span style={{ color: "#3B6D11" }}>
+              Consultations: +{formatFCFA(data?.revenuConsultations || 0)}
+            </span>
+            <span style={{ color: "#A32D2D" }}>
+              Pertes: -{formatFCFA(data?.pertes.total || 0)}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* MÉTRIQUES LIGNE 2 */}
@@ -177,6 +187,16 @@ const Page = () => {
             {data?.lotsPerimes}
           </div>
           <div className="stat-desc">lots à retirer</div>
+          {/* ✅ AJOUT */}
+          <button
+            className="btn btn-xs btn-error mt-2 w-fit"
+            onClick={async () => {
+              await loadLotsPerimes();
+              setShowLotsPerimes(true);
+            }}
+          >
+            Voir et retirer →
+          </button>
         </div>
         <div className="stat bg-base-100 border border-red-200 rounded-2xl border-l-4 border-l-red-400">
           <div className="stat-title text-red-600">Pertes ({periode})</div>
@@ -205,7 +225,6 @@ const Page = () => {
           </div>
           <div className="stat-desc">lots à 0 unité</div>
         </div>
-        
       </div>
 
       {/* GRAPHIQUES */}
@@ -343,9 +362,7 @@ const Page = () => {
               >
                 <div>
                   <p className="font-semibold text-sm">{s.nom}</p>
-                  <p className="text-xs text-gray-500">
-                    Seuil: {s.seuilMin}
-                  </p>
+                  <p className="text-xs text-gray-500">Seuil: {s.seuilMin}</p>
                 </div>
                 <span className="badge badge-warning">
                   {s.totalRestant} restants
@@ -390,6 +407,81 @@ const Page = () => {
           </div>
         </div>
       </div>
+
+      {showLotsPerimes && (
+  <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-2xl overflow-x-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="font-bold text-lg text-error">Lots périmés à retirer</h2>
+        <button
+          className="btn btn-sm btn-ghost"
+          onClick={() => setShowLotsPerimes(false)}
+        >✕</button>
+      </div>
+
+      {lotsPerimesDetails.length === 0 ? (
+        <p className="text-center text-gray-400 py-6">Aucun lot périmé avec du stock restant</p>
+      ) : (
+        <table className="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Restant</th>
+              <th>Expiration</th>
+              <th>Perte estimée</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lotsPerimesDetails.map((lot) => (
+              <tr key={lot.id}>
+                <td className="font-semibold">{lot.nom}</td>
+                <td>{lot.quantite_restante}</td>
+                <td className="text-error text-sm">
+                  {new Date(lot.date_expiration).toLocaleDateString("fr-FR")}
+                </td>
+                <td className="text-error">
+                  {formatFCFA(Number(lot.quantite_restante) * Number(lot.prix_unitaire_achat || 0))}
+                </td>
+                <td>
+                  <button
+                    className="btn btn-xs btn-error"
+                    onClick={async () => {
+                      if (!confirm(`Retirer le lot périmé de ${lot.nom} ?`)) return;
+                      try {
+                        await axios.delete("/api/stock/perimes", { data: { id: lot.id } });
+                        toast.success("Lot retiré !");
+                        await loadLotsPerimes();
+                        await loadDashboard();
+                      } catch {
+                        toast.error("Erreur lors du retrait");
+                      }
+                    }}
+                  >
+                    Retirer
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <div className="flex justify-between items-center mt-4">
+        <p className="text-sm text-gray-500">
+          {lotsPerimesDetails.length} lot(s) périmé(s) avec stock restant
+        </p>
+        <button
+          className="btn btn-sm btn-outline"
+          onClick={() => setShowLotsPerimes(false)}
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </Wrapper>
   );
 };

@@ -11,23 +11,3 @@ function apiResponse(
 ) {
   return Response.json({ success, message, data }, { status });
 }
-
-export const GET = async (params: Promise<{ id: string }>) => {
-  try {
-    const { id } = await params;
-
-    const produits = await drizzleDb.query.ProduitSchema.findFirst(
-    {
-        where:eq(ProduitSchema.id, id)
-    }
-    )
-      /* .select()
-      .from(ProduitSchema)
-      .where(); */
-if(!produits) return null
-    return NextResponse.json(produits);
-  } catch (error: any) {
-    console.error(error);
-    return null;
-  }
-};

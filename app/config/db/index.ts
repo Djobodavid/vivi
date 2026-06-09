@@ -3,6 +3,7 @@ import {Pool} from "pg"
 import * as schema from './schema'
 
 const pool_connexion = process.env.NODE_ENV=== "production"
+
   ? new Pool({
       connectionString: process.env.DATABASE_URL,
     })
@@ -14,5 +15,5 @@ const pool_connexion = process.env.NODE_ENV=== "production"
       database: process.env.DB_NAME,
     });
 
-
+//console.log(pool_connexion.totalCount,"Database connection pool created successfully",process.env.DB_USER,process.env.DB_HOST,process.env.DB_NAME,"\n-------------------------");
 export const drizzleDb = drizzle(pool_connexion , {schema:schema} )

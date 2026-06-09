@@ -1,20 +1,11 @@
 import { drizzleDb } from "@/app/config/db";
 import {
-  StockSchema,
-  ProduitSchema,
-  VenteSchema,
-  VenteItemSchema,
-  UniteSchema,
-  ParametreSchema,
+  StockSchema, ProduitSchema, VenteSchema,
+  VenteItemSchema, UniteSchema, ParametreSchema, ConsultationSchema,
 } from "@/app/config/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { ConsultationSchema } from "@/app/config/db/schema";
-function apiResponse(
-  success: boolean,
-  message: string,
-  data?: any,
-  status = 200,
-) {
+
+function apiResponse(success: boolean, message: string, data?: any, status = 200) {
   return Response.json({ success, message, data }, { status });
 }
 
@@ -23,49 +14,28 @@ export const GET = async (req: Request) => {
     const { searchParams } = new URL(req.url);
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
-    const periode = searchParams.get("periode") || "mois"; // jour | semaine | mois | custom
+    const periode = searchParams.get("periode") || "mois";
 
-    // 🔥 Calcul plage de dates pour les pertes
-    let perteFrom = "";
-    let perteTo = "";
+    // 🔥 Plage de dates (partagée pour bénéfice ET pertes)
+    let dateRangeFrom = "";
+    let dateRangeTo = "";
 
     if (periode === "jour") {
-      perteFrom = "CURRENT_DATE";
-      perteTo = "CURRENT_DATE + INTERVAL '1 day'";
+      dateRangeFrom = "CURRENT_DATE";
+      dateRangeTo = "CURRENT_DATE + INTERVAL '1 day'";
     } else if (periode === "semaine") {
-      perteFrom = "CURRENT_DATE - INTERVAL '7 days'";
-      perteTo = "CURRENT_DATE + INTERVAL '1 day'";
+      dateRangeFrom = "CURRENT_DATE - INTERVAL '7 days'";
+      dateRangeTo = "CURRENT_DATE + INTERVAL '1 day'";
     } else if (periode === "mois") {
-      perteFrom = "DATE_TRUNC('month', CURRENT_DATE)";
-      perteTo = "DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'";
+      dateRangeFrom = "DATE_TRUNC('month', CURRENT_DATE)";
+      dateRangeTo = "DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'";
     } else if (periode === "custom" && dateFrom && dateTo) {
-      perteFrom = `'${dateFrom}'::date`;
-      perteTo = `'${dateTo}'::date + INTERVAL '1 day'`;
+      dateRangeFrom = `'${dateFrom}'::date`;
+      dateRangeTo = `'${dateTo}'::date + INTERVAL '1 day'`;
     } else {
-      perteFrom = "DATE_TRUNC('month', CURRENT_DATE)";
-      perteTo = "DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'";
+      dateRangeFrom = "DATE_TRUNC('month', CURRENT_DATE)";
+      dateRangeTo = "DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'";
     }
-
-    // Prix consultation depuis paramètres
-    const prixConsultParam = await drizzleDb
-      .select()
-      .from(ParametreSchema)
-      .where(eq(ParametreSchema.cle, "prix_consultation"));
-
-    const prixConsultation = Number(prixConsultParam[0]?.valeur || 0);
-
-    // Nombre de consultations du mois
-    const consultationsMois = await drizzleDb
-      .select({
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(ConsultationSchema)
-      .where(
-        sql`DATE_TRUNC('month', ${ConsultationSchema.date_consultation}) = DATE_TRUNC('month', CURRENT_DATE)`,
-      );
-
-    const revenuConsultations =
-      Number(consultationsMois[0]?.count || 0) * prixConsultation;
 
     // 🔥 1. Ventes du jour
     const ventesJour = await drizzleDb
@@ -82,57 +52,63 @@ export const GET = async (req: Request) => {
         total: sql<number>`COALESCE(SUM(CAST(${VenteSchema.total} AS NUMERIC)), 0)`,
       })
       .from(VenteSchema)
-      .where(
-        sql`DATE_TRUNC('month', ${VenteSchema.date_vente}) = DATE_TRUNC('month', CURRENT_DATE)`,
-      );
+      .where(sql`DATE_TRUNC('month', ${VenteSchema.date_vente}) = DATE_TRUNC('month', CURRENT_DATE)`);
 
-    // 🔥 3. Bénéfice du mois (CA vente - coût achat des items vendus ce mois)
-    const beneficeMois = await drizzleDb
+    // 🔥 3. Bénéfice avec filtre période
+    const beneficeResult = await drizzleDb
       .select({
         benefice: sql<number>`
-      COALESCE(SUM(
-        (CAST(${VenteItemSchema.prix_unitaire} AS NUMERIC) - CAST(${StockSchema.prix_unitaire_achat} AS NUMERIC)) * ${VenteItemSchema.quantite}
-      ), 0)
-    `,
+          COALESCE(SUM(
+            (CAST(${VenteItemSchema.prix_unitaire} AS NUMERIC) -
+             CAST(${StockSchema.prix_unitaire_achat} AS NUMERIC)) * ${VenteItemSchema.quantite}
+          ), 0)
+        `,
       })
       .from(VenteItemSchema)
       .leftJoin(StockSchema, eq(VenteItemSchema.stockId, StockSchema.id))
       .leftJoin(VenteSchema, eq(VenteItemSchema.venteId, VenteSchema.id))
       .where(
-        sql`DATE_TRUNC('month', ${VenteSchema.date_vente}) = DATE_TRUNC('month', CURRENT_DATE)`,
+        sql`${VenteSchema.date_vente} >= ${sql.raw(dateRangeFrom)}
+        AND ${VenteSchema.date_vente} < ${sql.raw(dateRangeTo)}`
       );
 
-    // 🔥 4. Stock faible — basé sur le stock global du produit
-    // 🔥 Récupérer le seuil depuis les paramètres
+    // 🔥 4. Consultations avec filtre période
+    const consultationsResult = await drizzleDb
+      .select({
+        total: sql<number>`COALESCE(SUM(CAST(${ConsultationSchema.prix} AS NUMERIC)), 0)`,
+      })
+      .from(ConsultationSchema)
+      .where(
+        sql`${ConsultationSchema.date_consultation} >= ${sql.raw(dateRangeFrom)}
+        AND ${ConsultationSchema.date_consultation} < ${sql.raw(dateRangeTo)}
+        AND ${ConsultationSchema.supprime} = false`
+      );
+
+    const revenuConsultations = Number(consultationsResult[0]?.total || 0);
+
+    // 🔥 5. Seuil stock
     const seuilParam = await drizzleDb
       .select()
       .from(ParametreSchema)
       .where(eq(ParametreSchema.cle, "seuil_stock_min"));
-      
 
     const seuilMin = Number(seuilParam[0]?.valeur || 20);
 
-    // 🔥 4. Stock faible — basé sur le seuil global
+    // 🔥 6. Stock faible
     const stockFaible = await drizzleDb
       .select({
         produitId: StockSchema.produitId,
         nom: ProduitSchema.nom,
         totalRestant: sql<number>`SUM(${StockSchema.quantite_restante})`,
-        seuilMin: sql<number>`${seuilMin}`, // ✅ AJOUTER
+        seuilMin: sql<number>`${seuilMin}`,
       })
       .from(StockSchema)
       .leftJoin(ProduitSchema, eq(StockSchema.produitId, ProduitSchema.id))
-      .where(
-        sql`${StockSchema.date_expiration} > NOW()
-    AND ${StockSchema.statut} = 'operationnel'`,
-      )
+      .where(sql`${StockSchema.date_expiration} > NOW() AND ${StockSchema.statut} = 'operationnel'`)
       .groupBy(StockSchema.produitId, ProduitSchema.nom)
-      .having(
-        sql`SUM(${StockSchema.quantite_restante}) <= ${seuilMin}
-    AND SUM(${StockSchema.quantite_restante}) > 0`,
-      );
+      .having(sql`SUM(${StockSchema.quantite_restante}) <= ${seuilMin} AND SUM(${StockSchema.quantite_restante}) > 0`);
 
-    // 🔥 5. Lots périmés avec stock restant
+    // 🔥 7. Lots périmés
     const lotsPerimes = await drizzleDb
       .select({
         id: StockSchema.id,
@@ -143,56 +119,45 @@ export const GET = async (req: Request) => {
       })
       .from(StockSchema)
       .leftJoin(ProduitSchema, eq(StockSchema.produitId, ProduitSchema.id))
-      .where(
-        sql`${StockSchema.date_expiration} < NOW()
-        AND ${StockSchema.quantite_restante} > 0`,
-      );
+      .where(sql`${StockSchema.date_expiration} < NOW() AND ${StockSchema.quantite_restante} > 0`);
 
-    // 🔥 6. Pertes sur la période choisie
+    // 🔥 8. Pertes avec filtre période
     const pertesData = await drizzleDb
       .select({
         nom: ProduitSchema.nom,
         quantite_restante: StockSchema.quantite_restante,
         prix_unitaire_achat: StockSchema.prix_unitaire_achat,
         date_expiration: StockSchema.date_expiration,
-        perte: sql<number>`
-      CAST(${StockSchema.quantite_restante} AS NUMERIC) *
-      CAST(${StockSchema.prix_unitaire_achat} AS NUMERIC)
-    `,
+        perte: sql<number>`CAST(${StockSchema.quantite_restante} AS NUMERIC) * CAST(${StockSchema.prix_unitaire_achat} AS NUMERIC)`,
       })
       .from(StockSchema)
       .leftJoin(ProduitSchema, eq(StockSchema.produitId, ProduitSchema.id))
       .where(
         sql`${StockSchema.date_expiration} < NOW()
-    AND ${StockSchema.quantite_restante} > 0
-    AND ${StockSchema.date_expiration} >= ${sql.raw(perteFrom)}
-    AND ${StockSchema.date_expiration} < ${sql.raw(perteTo)}`,
+        AND ${StockSchema.quantite_restante} > 0
+        AND ${StockSchema.date_expiration} >= ${sql.raw(dateRangeFrom)}
+        AND ${StockSchema.date_expiration} < ${sql.raw(dateRangeTo)}`
       )
-      .orderBy(
-        sql`CAST(${StockSchema.quantite_restante} AS NUMERIC) * CAST(${StockSchema.prix_unitaire_achat} AS NUMERIC) DESC`,
-      ); // ✅ expression complète
+      .orderBy(sql`CAST(${StockSchema.quantite_restante} AS NUMERIC) * CAST(${StockSchema.prix_unitaire_achat} AS NUMERIC) DESC`);
 
-    const totalPertes = pertesData.reduce(
-      (sum, p) => sum + Number(p.perte || 0),
-      0,
-    );
+    const totalPertes = pertesData.reduce((sum, p) => sum + Number(p.perte || 0), 0);
 
-    // 🔥 7. Top 5 produits vendus
+    // 🔥 9. Top 5 produits
     const topProduits = await drizzleDb
       .select({
         nom: ProduitSchema.nom,
         total_vendu: sql<number>`SUM(${VenteItemSchema.quantite})`,
-        unite: UniteSchema.nom, // ✅ on récupère l'unité
+        unite: UniteSchema.nom,
       })
       .from(VenteItemSchema)
       .leftJoin(ProduitSchema, eq(VenteItemSchema.produitId, ProduitSchema.id))
-      .leftJoin(StockSchema, eq(VenteItemSchema.stockId, StockSchema.id)) // ✅ via le stock
-      .leftJoin(UniteSchema, eq(StockSchema.uniteId, UniteSchema.id)) // ✅ unité du stock
+      .leftJoin(StockSchema, eq(VenteItemSchema.stockId, StockSchema.id))
+      .leftJoin(UniteSchema, eq(StockSchema.uniteId, UniteSchema.id))
       .groupBy(ProduitSchema.nom, UniteSchema.nom)
       .orderBy(sql`SUM(${VenteItemSchema.quantite}) DESC`)
       .limit(5);
 
-    // 🔥 8. Ventes 7 derniers jours
+    // 🔥 10. Ventes 7 derniers jours
     const ventes7Jours = await drizzleDb
       .select({
         date: sql<string>`DATE(${VenteSchema.date_vente})`,
@@ -204,7 +169,7 @@ export const GET = async (req: Request) => {
       .groupBy(sql`DATE(${VenteSchema.date_vente})`)
       .orderBy(sql`DATE(${VenteSchema.date_vente}) ASC`);
 
-    // 🔥 9. Lots expirant dans 30 jours
+    // 🔥 11. Lots expirant dans 30 jours
     const expirantBientot = await drizzleDb
       .select({
         id: StockSchema.id,
@@ -217,26 +182,20 @@ export const GET = async (req: Request) => {
       .where(
         sql`${StockSchema.date_expiration} > NOW()
         AND ${StockSchema.date_expiration} <= NOW() + INTERVAL '30 days'
-        AND ${StockSchema.quantite_restante} > 0`,
+        AND ${StockSchema.quantite_restante} > 0`
       )
       .orderBy(StockSchema.date_expiration);
 
-    // 🔥 10. Stocks épuisés — tout stock restant = 0 peu importe le statut
+    // 🔥 12. Stocks épuisés
     const stocksEpuises = await drizzleDb
-      .select({
-        produitId: StockSchema.produitId,
-        nom: ProduitSchema.nom,
-      })
+      .select({ produitId: StockSchema.produitId, nom: ProduitSchema.nom })
       .from(StockSchema)
       .leftJoin(ProduitSchema, eq(StockSchema.produitId, ProduitSchema.id))
       .groupBy(StockSchema.produitId, ProduitSchema.nom)
-      .having(
-        sql`SUM(CASE WHEN ${StockSchema.date_expiration} > NOW() 
-    THEN ${StockSchema.quantite_restante} ELSE 0 END) = 0`,
-      );
+      .having(sql`SUM(CASE WHEN ${StockSchema.date_expiration} > NOW() THEN ${StockSchema.quantite_restante} ELSE 0 END) = 0`);
 
-    // ✅ AJOUTEZ CES DEUX LIGNES juste avant le return
-    const beneficeProduits = Number(beneficeMois[0]?.benefice || 0);
+    // ✅ Calcul final
+    const beneficeProduits = Number(beneficeResult[0]?.benefice || 0);
     const beneficeNet = beneficeProduits + revenuConsultations - totalPertes;
 
     return apiResponse(true, "Dashboard récupéré", {
@@ -245,26 +204,20 @@ export const GET = async (req: Request) => {
         total: Number(ventesJour[0]?.total || 0),
       },
       caMois: Number(venteMois[0]?.total || 0),
-      // ✅ beneficeNet = produits + consultations - pertes (pas deux fois)
-      beneficeNet, // ✅ variable déclarée
-      beneficeMois: beneficeProduits, // ✅ variable déclarée
+      beneficeNet,
+      beneficeMois: beneficeProduits,
       revenuConsultations,
       stockFaible,
       lotsPerimes: lotsPerimes.length,
-      pertes: {
-        periode,
-        dateFrom,
-        dateTo,
-        total: totalPertes,
-        details: pertesData,
-      },
+      pertes: { periode, dateFrom, dateTo, total: totalPertes, details: pertesData },
       topProduits,
       ventes7Jours,
       expirantBientot,
       stocksEpuises,
-      stocksEpuisesCount: stocksEpuises.length, // ← pour la métrique
+      stocksEpuisesCount: stocksEpuises.length,
       seuilMin,
     });
+
   } catch (error: any) {
     console.error(error);
     return apiResponse(false, "Erreur serveur: " + error?.message, null, 500);

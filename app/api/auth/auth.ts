@@ -17,10 +17,10 @@ const authOptions = {
       async authorize(credentials) {
         try{
         if (!credentials?.email || !credentials?.password) return null;
-          console.log("credentials",credentials)
-        const user = await drizzleDb.query.UserSchema.findFirst({
+     let user= await drizzleDb.query.UserSchema.findFirst({
           where: eq(UserSchema.email, credentials.email as any),
         });
+     
           /* .select()
           .from(users)
           .where(eq(users.email, credentials.email))
@@ -29,7 +29,9 @@ const authOptions = {
         if (!user) return null;
 
         const isValid = await bcrypt.compare(credentials.password as any, user.motDePasse);
+      
         console.log(credentials.password,"isValid",isValid)
+      
         if (!isValid) return null;
 
         /* // Récupérer le rôle
@@ -46,7 +48,7 @@ const authOptions = {
           nom:user?.nom,
           prenom:user?.prenom
         };
-      //   console.log("user connected",userInfo)
+        console.log("user connected",userInfo)
         return userInfo
       }catch(error:any){
         console.log("Erreur lors de l'authentification:", error.message);
