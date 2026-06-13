@@ -26,6 +26,8 @@ const router = useRouter();
     } else {
       router.push("/vente");
     }
+  }else{
+    router.push("/");
   }
 }, [status, data]);
 
@@ -39,8 +41,10 @@ const handleLogin = async () => {
   setErrorMsg("");
   
   try {
-    await signIn("credentials", { email, password, redirect: false });
+  const resp=  await signIn("credentials", { email, password, redirect: false });
+  console.warn("resp",resp)
     setSuccessMsg("Connexion réussie !");
+
   } catch (error: any) {
     setErrorMsg("Email ou mot de passe invalide");
   } finally {
